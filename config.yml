@@ -8,6 +8,7 @@ pipeline:
 # # See https://rasa.com/docs/rasa/tuning-your-model for more information.
   - name: WhitespaceTokenizer
   - name: RegexFeaturizer
+  - name: RegexEntityExtractor
   - name: LexicalSyntacticFeaturizer
   - name: CountVectorsFeaturizer
   - name: CountVectorsFeaturizer
@@ -18,6 +19,7 @@ pipeline:
     epochs: 100
     constrain_similarities: true
   - name: EntitySynonymMapper
+  - name: custom.custom_entity_mapper.CustomEntityMapper
   - name: ResponseSelector
     epochs: 100
     constrain_similarities: true
