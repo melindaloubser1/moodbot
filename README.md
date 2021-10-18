@@ -19,7 +19,7 @@ You should see a log like the one below. Notice that:
 * Therefore `utter_greet` cannot be predicted by MemoizationPolicy - there is no matching set of states in any memorized story
 * The final `action_listen` is predicted by TEDPolicy instead
 
-You can insert a breakpoint/debug statement [here](https://github.com/RasaHQ/rasa/blob/1441d29702e8e112f90e560981c5556261555231/rasa/core/featurizers/single_state_featurizer.py#L258-L263) to further inspect the featurization of the state added by the forced follow up action; it follows the same format as any other action. 
+See [here](https://github.com/RasaHQ/rasa/blob/1441d29702e8e112f90e560981c5556261555231/rasa/core/featurizers/single_state_featurizer.py#L258-L263) to further inspect the featurization of the state added by the forced follow up action; also see the script `inspect_model.py` for a very rough starting point to look inside a model's featurizers.
 
 ```
 Bot loaded. Type a message and press enter (use '/stop' to exit): 
