@@ -1,3 +1,3 @@
 ## What is this branch about?
 
-`main` contains the unmodified result of `rasa init` using Rasa 2.8.x.
+`chained_checkpoints` contains an example of chaining checkpoints with no intermediate steps. This does not work, so don't do it!
