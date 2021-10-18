@@ -1,9 +1,6 @@
 version: "2.0"
 
 nlu:
-- regex: number
-  examples: |
-    - \d+
 - intent: greet
   examples: |
     - hey
@@ -93,8 +90,3 @@ nlu:
     - are you a human?
     - am I talking to a bot?
     - am I talking to a human?
-
-- intent: inform
-  examples: |
-    - [12354](number)
-    - [236234](number)
