@@ -1,6 +1,20 @@
 version: "2.0"
 
 stories:
+- story: greet
+  steps:
+  - intent: greet
+  - action: utter_greet
+
+- story: how are you
+  steps:
+  - intent: ask_how_are_you
+  - action: utter_great
+
+- story: greet and how are you
+  steps:
+  - intent: greet+ask_how_are_you
+  - action: utter_greet_great
 
 - story: happy path
   steps:

@@ -17,6 +17,29 @@ nlu:
     - goodevening
     - good afternoon
 
+- intent: ask_how_are_you
+  examples: |
+    - How are you?
+    - how are you doing?
+    - is everything going well?
+    - how you doing today?
+    - what's up?
+
+- intent: greet+ask_how_are_you
+  examples: |
+    - Hallo, how are you?
+    - good morning! how's it going?
+    - Hey there, what's up?
+    - Hi hi, all good with you?
+
+- intent: mood_great+ask_how_are_you
+  examples: |
+    - I'm doing great, how about you?
+    - great, and you?
+    - i'm good, how are you doing?
+    - all good here, how are you?
+    - good and you?
+
 - intent: goodbye
   examples: |
     - good afternoon
