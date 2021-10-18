@@ -28,3 +28,9 @@ stories:
   - action: utter_did_that_help
   - intent: deny
   - action: utter_goodbye
+
+- story: force followup then greet
+  steps:
+  - intent: followup
+  - action: action_force_followup
+  - action: utter_greet
