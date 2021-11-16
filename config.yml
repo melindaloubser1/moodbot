@@ -19,7 +19,7 @@ pipeline:
     epochs: 100
     constrain_similarities: true
   - name: EntitySynonymMapper
-  - name: custom.custom_entity_mapper.CustomEntityMapper
+  - name: custom.migrated_custom_entity_mapper.CustomEntityMapper
   - name: ResponseSelector
     epochs: 100
     constrain_similarities: true

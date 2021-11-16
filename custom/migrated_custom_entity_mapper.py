@@ -1,4 +1,6 @@
+from __future__ import annotations
 from typing import Dict, Text, Any, List, Optional, Type
+from abc import ABC, abstractmethod
 
 from rasa.engine.graph import GraphComponent, ExecutionContext
 from rasa.engine.recipes.default_recipe import DefaultV1Recipe
@@ -25,8 +27,7 @@ class CustomEntityMapper(GraphComponent, EntityExtractorMixin):
         execution_context: ExecutionContext,
     ) -> GraphComponent:
 
-        return cls(config, execution_context.node_name)
-
+        return cls()
 
     def normalize_number_from_text(
         self, number_text: Optional[Text]
