@@ -1,4 +1,4 @@
-nlu_data_path: data/nlu.yml
+nlu_data_path: data
 default_target_files:
   intents: data/nlu.yml
   synonyms: data/nlu.yml

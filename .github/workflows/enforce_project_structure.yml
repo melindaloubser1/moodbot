@@ -5,6 +5,7 @@ on:
       - 'project_structure.py'
       - 'project_structure.yml'
       - '.github/workflows/enforce_project_structure.yml'
+
   workflow_dispatch:
     inputs:
       apply_to_branch:

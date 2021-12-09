@@ -5,15 +5,17 @@ There are a few details of how training data is loaded by Rasa that can have une
 E.g. synonyms in both the short (inline) and long formats have equal status in loaded training data.
 This means a file can be found to contain a synonym when it has no explicit "synonym:" section.
 """
+import asyncio
 
 from collections import OrderedDict
 import argparse
 import logging
 import os
+from rasa.shared.nlu.training_data import training_data
 
 from ruamel.yaml import StringIO
 
-from rasa.shared.nlu.training_data.loading import load_data as load_nlu_data
+from rasa.shared.importers.rasa import RasaFileImporter
 import rasa.shared.data
 import rasa.shared.utils.io
 from rasa.shared.nlu.training_data.training_data import TrainingData
@@ -71,7 +73,7 @@ class SortableTrainingData(TrainingData):
         self.sort_intent_examples()
 
     def get_all_keys_present(self):
-        intents = self.intents
+        intents = set(self.get_intent_order())
         synonyms = set(self.entity_synonyms.values())
         regexes = set([reg.get("name") for reg in self.regex_features])
         lookups = set([lookup.get("name") for lookup in self.lookup_tables])
@@ -108,8 +110,7 @@ class ProjectStructure:
             attrib_to_update[key] = value
 
     def update_project_structure_for_file(self, nlu_file):
-        nlu_data = load_nlu_data(nlu_file)
-        nlu_data.__class__ = SortableTrainingData
+        nlu_data = load_sortable_nlu_data(nlu_file)
         intents = nlu_data.get_intent_order()
         synonyms = sorted(set(nlu_data.entity_synonyms.values()))
         regexes = sorted(set([reg.get("name") for reg in nlu_data.regex_features]))
@@ -123,9 +124,7 @@ class ProjectStructure:
         self.update_project_structure("lookups", lookups, nlu_file_relative_path)
 
     def infer_structure_from_files(self):
-        nlu_data = load_nlu_data(self.nlu_data_path)
-        nlu_data.__class__ = SortableTrainingData
-
+        nlu_data = load_sortable_nlu_data(self.nlu_data_path)
         self.intents = ordered_dict_from_list(nlu_data.get_intent_order())
         self.synonyms = ordered_dict_from_list(
             sorted(set(nlu_data.entity_synonyms.values()))
@@ -240,6 +239,13 @@ class ProjectStructure:
     def write_structure_to_file(self, output_file):
         rasa.shared.utils.io.write_yaml(self.as_dict(), output_file, True)
 
+def load_sortable_nlu_data(nlu_data_path):
+    nlu_files = rasa.shared.data.get_data_files([nlu_data_path], rasa.shared.data.is_nlu_file)
+    training_data_importer = RasaFileImporter(training_data_paths=nlu_files)
+    loop = asyncio.get_event_loop()
+    nlu_data = loop.run_until_complete(training_data_importer.get_nlu_data())
+    nlu_data.__class__ = SortableTrainingData
+    return nlu_data
 
 def ordered_dict_from_list(items):
     return OrderedDict({item: "" for item in items})
@@ -273,16 +279,15 @@ def get_training_data_for_keys(nlu_data, included_keys):
 
 
 def apply_project_structure(project_structure: ProjectStructure):
-    nlu_data = load_nlu_data(project_structure.nlu_data_path)
-    nlu_data.__class__ = SortableTrainingData
-    nlu_data.sort_data()
-
+    nlu_data = load_sortable_nlu_data(project_structure.nlu_data_path)
     all_keys_in_data = nlu_data.get_all_keys_present()
     all_keys_in_project_structure = project_structure.get_handled_keys()
     new_keys = {
         key: all_keys_in_data[key] - all_keys_in_project_structure[key]
         for key in all_keys_in_data.keys()
     }
+
+    nlu_files = rasa.shared.data.get_data_files(project_structure.nlu_data_path, rasa.shared.data.is_nlu_file)
 
     target_keys_per_file = project_structure.as_inverted_dict()
     for section, filename in project_structure.as_dict()[
@@ -291,10 +296,13 @@ def apply_project_structure(project_structure: ProjectStructure):
         target_keys_per_file[filename][section].extend(new_keys[section])
 
     writer = RasaYAMLWriter()
-
-    for filename in target_keys_per_file.keys():
+    for filename in nlu_files:
+        target_keys =  target_keys_per_file.get(filename, [])
+        if not target_keys:
+            os.remove(filename)
+            continue
         contents_per_file = get_training_data_for_keys(
-            nlu_data, target_keys_per_file[filename]
+            nlu_data, target_keys
         )
         writer.dump(filename, contents_per_file)
 
