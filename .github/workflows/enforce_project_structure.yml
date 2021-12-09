@@ -22,7 +22,7 @@ jobs:
     steps:
     - name: Set branches
       run: |
-        echo "Running workflow from branch: ${{ GITHUB_HEAD_REF }}"
+        echo "Running workflow from branch: ${{ GITHUB_REF }}"
         echo "Apply workflow to branch: ${{ github.event.inputs.apply_to_branch }}"
     - name: Checkout project structure definition & script 
       uses: actions/checkout@v2
