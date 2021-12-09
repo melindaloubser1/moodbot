@@ -17,13 +17,20 @@ jobs:
   enforce_project_structure:
     runs-on: ubuntu-latest
     name: Enforce Project Structure
+    env:
+      PROJECT_STRUCTURE_SCRIPT: project_structure.py
+      PROJECT_STRUCTURE_FILE: project_structure.yml
     steps:
-    - name: Set target branches
-      id: vars
+    - name: Set env vars
+      if: github.event.inputs.apply_to_branch
       run: |
-        echo ::set-output name=script::"${GITHUB_REF##*/}_project_structure.py"
-        echo ::set-output name=project_structure::"${GITHUB_REF##*/}_project_structure.yml"
-    - name: Checkout branch for project structure definition & script 
+          echo "PROJECT_STRUCTURE_SCRIPT=${GITHUB_REF##*/}-$PROJECT_STRUCTURE_SCRIPT" >> $GITHUB_ENV
+          echo "PROJECT_STRUCTURE_FILE=${GITHUB_REF##*/}-PROJECT_STRUCTURE_FILE" >> $GITHUB_ENV
+    - name: Checkout default
+      if: github.event.inputs.apply_to_branch==''
+      uses: actions/checkout@v2
+    - name: Checkout whole repo for access to other branches
+      if: github.event.inputs.apply_to_branch
       uses: actions/checkout@v2
       with:
         fetch-depth: '0'
@@ -34,17 +41,17 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements-project-structure.txt
     - name: Copy project structure definition & script
+      if: github.event.inputs.apply_to_branch
       run: |
         cp project_structure.py ${{ steps.vars.outputs.script }}
         cp project_structure.yml ${{ steps.vars.outputs.project_structure }}
-        echo $(ls)
     - name: Checkout branch to enforce structure on
       if: github.event.inputs.apply_to_branch
       run: |
         git checkout ${{ github.event.inputs.apply_to_branch}}
     - name: Enforce structure on branch
       run: |
-        python ${{ steps.vars.outputs.script }} -enforce --project_structure_file ${{ steps.vars.outputs.project_structure }}
+        python $PROJECT_STRUCTURE_SCRIPT -enforce --project_structure_file $PROJECT_STRUCTURE_FILE
     - name: Check if changes were made
       id: git_diff
       run: |
