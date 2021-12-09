@@ -1,0 +1,18 @@
+nlu_data_path: data/nlu.yml
+default_target_files:
+  intents: data/nlu.yml
+  synonyms: data/nlu.yml
+  regexes: data/nlu.yml
+  lookups: data/nlu.yml
+target_files:
+  intents:
+    greet: data/nlu.yml
+    goodbye: data/nlu.yml
+    affirm: data/nlu.yml
+    deny: data/nlu.yml
+    mood_great: data/nlu.yml
+    mood_unhappy: data/nlu.yml
+    bot_challenge: data/nlu.yml
+  synonyms: {}
+  regexes: {}
+  lookups: {}

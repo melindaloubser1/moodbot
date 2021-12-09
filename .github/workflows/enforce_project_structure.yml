@@ -1,0 +1,57 @@
+on:
+  push:
+    paths:
+      - 'data/*'
+      - 'project_structure.py'
+      - 'project_structure.yml'
+      - '.github/workflows/enforce_project_structure.yml'
+  workflow_dispatch:
+    inputs:
+      apply_to_branch:
+        description: 'Branch to enforce project structure on'
+        required: true
+        default: 'main'
+
+
+
+
+jobs:
+  enforce_project_structure:
+    runs-on: ubuntu-latest
+    name: Enforce Project Structure
+    steps:
+    - name: Set branches
+      run: |
+        echo "Running workflow from branch: ${{ GITHUB_HEAD_REF }}"
+        echo "Apply workflow to branch: ${{ github.event.inputs.apply_to_branch }}"
+    - name: Checkout project structure definition & script 
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
+        ref: ${{ GITHUB_REF }}
+    # - name: Copy project structure definition & script
+    #   run: ''
+    # - name: Checkout target branch
+    #   uses: actions/checkout@v2
+    #   with:
+    #     ref: ''
+    # - name: Setup python
+    #   uses: actions/setup-python@v1
+    #   with:
+    #     python-version: '3.8'
+    # - name: Install dependencies
+    #   run: pip install -r requirements-project-structure.txt
+    # - name: apply project structure
+    #   run: python project_structure.py -enforce
+    # - name: Check if changes were made
+    #   id: git_diff
+    #   run: |
+    #     git diff --exit-code
+    #   continue-on-error: true
+    # - name: Commit changes if any were made
+    #   if: steps.git_diff.outcome=='failure'
+    #   run: |
+    #     git config --global user.name 'Github Actions'
+    #     git config --global user.email 'github.actions@users.noreply.github.com'
+    #     git commit -am "Github action: enforced project structure"
+    #     git push
