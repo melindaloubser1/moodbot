@@ -13,7 +13,7 @@ jobs:
       with:
         python-version: '3.7'
     - name: Install dependencies
-      run: pip install -r requirements-project-structure.txt
+      run: pip install -r requirements.txt
     - name: apply project structure
       run: python project_structure.py -enforce
     - name: Check if changes were made
