@@ -21,9 +21,9 @@ from rasa.shared.nlu.training_data.formats.rasa_yaml import RasaYAMLWriter
 
 logger = logging.getLogger(__file__)
 
-DEFAULT_PROJECT_STRUCTURE_FILE = os.path.abspath("./project_structure.yml")
-DEFAULT_NLU_DATA_PATH = os.path.abspath("./data/nlu")
-DEFAULT_NLU_TARGET_FILE = os.path.abspath("./data/nlu/nlu.yml")
+DEFAULT_PROJECT_STRUCTURE_FILE = "./project_structure.yml"
+DEFAULT_NLU_DATA_PATH = "./data/nlu"
+DEFAULT_NLU_TARGET_FILE = "./data/nlu/nlu.yml"
 
 
 def _create_argument_parser() -> argparse.ArgumentParser:
@@ -75,11 +75,11 @@ class ProjectStructure:
         default_regex_file=DEFAULT_NLU_TARGET_FILE,
         default_lookup_file=DEFAULT_NLU_TARGET_FILE,
     ):
-        self.nlu_data_path = os.path.abspath(nlu_data_path)
-        self.default_intent_file = os.path.abspath(default_intent_file)
-        self.default_synonym_file = os.path.abspath(default_synonym_file)
-        self.default_regex_file = os.path.abspath(default_regex_file)
-        self.default_lookup_file = os.path.abspath(default_lookup_file)
+        self.nlu_data_path = os.path.relpath(nlu_data_path)
+        self.default_intent_file = os.path.relpath(default_intent_file)
+        self.default_synonym_file = os.path.relpath(default_synonym_file)
+        self.default_regex_file = os.path.relpath(default_regex_file)
+        self.default_lookup_file = os.path.relpath(default_lookup_file)
         self.intents = ordered_dict_from_list([])
         self.synonyms = ordered_dict_from_list([])
         self.regexes = ordered_dict_from_list([])

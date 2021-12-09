@@ -1,5 +1,12 @@
 on:
-  push
+  push:
+    paths:
+      - 'data/*'
+      - 'project_structure.py'
+      - 'project_structure.yml'
+      - '.github/workflows/enforce_project_structure.yml'
+  workflow_dispatch:
+    inputs: {}
 
 jobs:
   enforce_project_structure:
@@ -11,9 +18,9 @@ jobs:
     - name: Setup python
       uses: actions/setup-python@v1
       with:
-        python-version: '3.7'
+        python-version: '3.8'
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: pip install -r requirements-project-structure.txt
     - name: apply project structure
       run: python project_structure.py -enforce
     - name: Check if changes were made
@@ -26,5 +33,5 @@ jobs:
       run: |
         git config --global user.name 'Github Actions'
         git config --global user.email 'github.actions@users.noreply.github.com'
-        git commit -am "automated: applied project structure"
+        git commit -am "Github action: enforced project structure"
         git push
