@@ -1,0 +1,18 @@
+nlu_data_path: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+default_target_files:
+  intents: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+  synonyms: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+  regexes: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+  lookups: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+target_files:
+  intents:
+    greet: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+    goodbye: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+    affirm: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+    deny: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+    mood_great: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+    mood_unhappy: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+    bot_challenge: /Users/melinda/rasa_bots/moodbot/data/nlu.yml
+  synonyms: {}
+  regexes: {}
+  lookups: {}
