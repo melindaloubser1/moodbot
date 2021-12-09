@@ -26,44 +26,61 @@ DEFAULT_NLU_DATA_PATH = "./data/nlu"
 DEFAULT_NLU_TARGET_FILE = "./data/nlu/nlu.yml"
 
 
-def _create_argument_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Collect data for scorecard.")
-    parser.add_argument(
-        "-infer",
-        action="store_true",
-        help=("Infer project structure from project directory."),
-    )
+class SortableTrainingData(TrainingData):
+    def get_intent_order(self):
+        intent_order = list(
+            dict.fromkeys([ex.data["intent"] for ex in self.training_examples])
+        )
+        return intent_order
 
-    parser.add_argument(
-        "-enforce",
-        action="store_true",
-        help=(
-            "Enforce project structure from project structure file onto project directory"
-        ),
-    )
+    def sort_synonyms(self):
+        self.entity_synonyms = OrderedDict(
+            sorted(
+                [(synonym, value) for synonym, value in self.entity_synonyms.items()],
+                key=lambda x: (x[1], x[0]),
+            )
+        )
 
-    parser.add_argument(
-        "--project_structure_file",
-        help=("YAML file where project structure will be read from and written to."),
-        default=DEFAULT_PROJECT_STRUCTURE_FILE,
-    )
-    parser.add_argument(
-        "--nlu_data_path",
-        help=(
-            "Path to NLU data directory. Only used with -infer, -enforce determines directory from project structure file."
-        ),
-        default=DEFAULT_NLU_DATA_PATH,
-    )
-    parser.add_argument(
-        "--default_nlu_target_file",
-        help=(
-            "Default target file for items that don't already have a target file."
-            " Only used with '-infer', '-enforce' uses the defaults from the project structure file."
-        ),
-        default=DEFAULT_NLU_TARGET_FILE,
-    )
+    def sort_lookup_values(self):
+        self.lookup_tables = sorted(
+            [
+                {"name": lookup["name"], "elements": sorted(lookup["elements"])}
+                for lookup in self.lookup_tables
+            ],
+            key=lambda x: x["name"],
+        )
 
-    return parser
+    def get_examples_per_intent(self, intent_list):
+        examples_per_intent = {
+            intent: [ex for ex in self.training_examples if ex.data["intent"] == intent]
+            for intent in intent_list
+        }
+        return examples_per_intent
+
+    def sort_intent_examples(self):
+        intent_order = self.get_intent_order()
+        examples_per_intent = self.get_examples_per_intent(intent_order)
+        sorted_examples = [
+            ex for intent in intent_order for ex in examples_per_intent.get(intent, [])
+        ]
+        self.training_examples = sorted_examples
+
+    def sort_data(self):
+        self.sort_synonyms()
+        self.sort_lookup_values()
+        self.sort_intent_examples()
+
+    def get_all_keys_present(self):
+        intents = self.intents
+        synonyms = set(self.entity_synonyms.values())
+        regexes = set([reg.get("name") for reg in self.regex_features])
+        lookups = set([lookup.get("name") for lookup in self.lookup_tables])
+        return {
+            "intents": intents,
+            "synonyms": synonyms,
+            "regexes": regexes,
+            "lookups": lookups,
+        }
 
 
 class ProjectStructure:
@@ -222,63 +239,6 @@ class ProjectStructure:
         rasa.shared.utils.io.write_yaml(self.as_dict(), output_file, True)
 
 
-class SortableTrainingData(TrainingData):
-    def get_intent_order(self):
-        intent_order = list(
-            dict.fromkeys([ex.data["intent"] for ex in self.training_examples])
-        )
-        return intent_order
-
-    def sort_synonyms(self):
-        self.entity_synonyms = OrderedDict(
-            sorted(
-                [(synonym, value) for synonym, value in self.entity_synonyms.items()],
-                key=lambda x: (x[1], x[0]),
-            )
-        )
-
-    def sort_lookup_values(self):
-        self.lookup_tables = sorted(
-            [
-                {"name": lookup["name"], "elements": sorted(lookup["elements"])}
-                for lookup in self.lookup_tables
-            ],
-            key=lambda x: x["name"],
-        )
-
-    def get_examples_per_intent(self, intent_list):
-        examples_per_intent = {
-            intent: [ex for ex in self.training_examples if ex.data["intent"] == intent]
-            for intent in intent_list
-        }
-        return examples_per_intent
-
-    def sort_intent_examples(self):
-        intent_order = self.get_intent_order()
-        examples_per_intent = self.get_examples_per_intent(intent_order)
-        sorted_examples = [
-            ex for intent in intent_order for ex in examples_per_intent.get(intent, [])
-        ]
-        self.training_examples = sorted_examples
-
-    def sort_data(self):
-        self.sort_synonyms()
-        self.sort_lookup_values()
-        self.sort_intent_examples()
-
-    def get_all_keys_present(self):
-        intents = self.intents
-        synonyms = set(self.entity_synonyms.values())
-        regexes = set([reg.get("name") for reg in self.regex_features])
-        lookups = set([lookup.get("name") for lookup in self.lookup_tables])
-        return {
-            "intents": intents,
-            "synonyms": synonyms,
-            "regexes": regexes,
-            "lookups": lookups,
-        }
-
-
 def ordered_dict_from_list(items):
     return OrderedDict({item: "" for item in items})
 
@@ -351,19 +311,6 @@ def log_inference_warning(
     )
 
 
-def log_enforcement_info(project_structure_file, nlu_data_path):
-    logger.warning(
-        "\n"
-        f"Enforcing project structure from {project_structure_file} on data in {nlu_data_path}"
-    )
-
-    logger.warning(
-        "\n"
-        f"Note that synonyms, regexes & lookups will be sorted alphabetically."
-        "\nTherefore you may see a large diff the first time you run this command.\n"
-    )
-
-
 def infer_project_structure(
     nlu_data_path, project_structure_file, default_nlu_target_file
 ):
@@ -379,11 +326,64 @@ def infer_project_structure(
     project_structure.write_structure_to_file(project_structure_file)
 
 
+def log_enforcement_info(project_structure_file, nlu_data_path):
+    logger.warning(
+        "\n"
+        f"Enforcing project structure from {project_structure_file} on data in {nlu_data_path}"
+    )
+
+    logger.warning(
+        "\n"
+        f"Note that synonyms, regexes & lookups will be sorted alphabetically."
+        "\nTherefore you may see a large diff the first time you run this command.\n"
+    )
+
+
 def enforce_project_structure(project_structure_file):
     project_structure = ProjectStructure()
     project_structure.load_structure_from_file(project_structure_file)
     log_enforcement_info(project_structure_file, project_structure.nlu_data_path)
     apply_project_structure(project_structure)
+
+
+def _create_argument_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Collect data for scorecard.")
+    parser.add_argument(
+        "-infer",
+        action="store_true",
+        help=("Infer project structure from project directory."),
+    )
+
+    parser.add_argument(
+        "-enforce",
+        action="store_true",
+        help=(
+            "Enforce project structure from project structure file onto project directory"
+        ),
+    )
+
+    parser.add_argument(
+        "--project_structure_file",
+        help=("YAML file where project structure will be read from and written to."),
+        default=DEFAULT_PROJECT_STRUCTURE_FILE,
+    )
+    parser.add_argument(
+        "--nlu_data_path",
+        help=(
+            "Path to NLU data directory. Only used with -infer, -enforce determines directory from project structure file."
+        ),
+        default=DEFAULT_NLU_DATA_PATH,
+    )
+    parser.add_argument(
+        "--default_nlu_target_file",
+        help=(
+            "Default target file for items that don't already have a target file."
+            " Only used with '-infer', '-enforce' uses the defaults from the project structure file."
+        ),
+        default=DEFAULT_NLU_TARGET_FILE,
+    )
+
+    return parser
 
 
 if __name__ == "__main__":
