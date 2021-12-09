@@ -23,15 +23,16 @@ jobs:
     - name: Set branches
       run: |
         echo "Apply workflow to branch: ${{ github.event.inputs.apply_to_branch }}"
+        echo "Apply workflow from branch: ${{ GITHUB_REF }}"
     - name: Checkout project structure definition & script 
       uses: actions/checkout@v2
       with:
         fetch-depth: '0'
     - name: Copy project structure definition & script
       run: |
-        echo $(git branch -l)
+        cp project_structure.py "$GITHUB_REF"_project_structure.py
         echo $(ls)
-        echo $(`pwd`)
+
     # - name: Checkout target branch
     #   uses: actions/checkout@v2
     #   with:
