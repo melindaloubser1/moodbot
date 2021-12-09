@@ -115,10 +115,12 @@ class ProjectStructure:
         regexes = sorted(set([reg.get("name") for reg in nlu_data.regex_features]))
         lookups = sorted(set([lookup.get("name") for lookup in nlu_data.lookup_tables]))
 
-        self.update_project_structure("intents", intents, nlu_file)
-        self.update_project_structure("synonyms", synonyms, nlu_file)
-        self.update_project_structure("regexes", regexes, nlu_file)
-        self.update_project_structure("lookups", lookups, nlu_file)
+        nlu_file_relative_path = os.path.relpath(nlu_file)
+
+        self.update_project_structure("intents", intents, nlu_file_relative_path)
+        self.update_project_structure("synonyms", synonyms, nlu_file_relative_path)
+        self.update_project_structure("regexes", regexes, nlu_file_relative_path)
+        self.update_project_structure("lookups", lookups, nlu_file_relative_path)
 
     def infer_structure_from_files(self):
         nlu_data = load_nlu_data(self.nlu_data_path)
@@ -169,12 +171,12 @@ class ProjectStructure:
     def as_dict(self):
         return OrderedDict(
             {
-                "nlu_data_path": self.nlu_data_path,
+                "nlu_data_path": os.path.relpath(self.nlu_data_path),
                 "default_target_files": {
-                    "intents": self.default_intent_file,
-                    "synonyms": self.default_synonym_file,
-                    "regexes": self.default_regex_file,
-                    "lookups": self.default_lookup_file,
+                    "intents": os.path.relpath(self.default_intent_file),
+                    "synonyms": os.path.relpath(self.default_synonym_file),
+                    "regexes": os.path.relpath(self.default_regex_file),
+                    "lookups": os.path.relpath(self.default_lookup_file),
                 },
                 "target_files": {
                     "intents": self.intents,
