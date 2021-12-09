@@ -27,7 +27,7 @@ jobs:
         fetch-depth: '0'
     - name: Copy project structure definition & script
       run: |
-        cp project_structure.py "$GITHUB_REF"_project_structure.py
+        cp project_structure.py ${GITHUB_REF##*/}_project_structure.py
         echo $(ls)
 
     # - name: Checkout target branch
