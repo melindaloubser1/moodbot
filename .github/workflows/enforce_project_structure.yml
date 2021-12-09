@@ -20,10 +20,6 @@ jobs:
     - name: Set target branches
       id: vars
       run: |
-        if ${{ github.event.inputs.apply_to_branch }} :
-          echo ::set-output name=apply_to_branch::"${{ github.event.inputs.apply_to_branch }}"
-        else: 
-          echo ::set-output name=apply_to_branch::"${GITHUB_REF##*/}"
         echo ::set-output name=script::"${GITHUB_REF##*/}_project_structure.py"
         echo ::set-output name=project_structure::"${GITHUB_REF##*/}_project_structure.yml"
     - name: Checkout branch for project structure definition & script 
@@ -42,6 +38,7 @@ jobs:
         cp project_structure.yml ${{ steps.vars.outputs.project_structure }}
         echo $(ls)
     - name: Checkout branch to enforce structure on
+      if: ${{ github.event.inputs.apply_to_branch }}
       run: |
         git checkout ${{ steps.vars.outputs.apply_to_branch }}
     - name: Enforce structureon branch
