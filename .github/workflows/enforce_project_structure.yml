@@ -26,10 +26,10 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: '0'
-    - name: Setup python
-      uses: actions/setup-python@v1
-      with:
-        python-version: '3.8'
+    # - name: Setup python
+    #   uses: actions/setup-python@v1
+    #   with:
+    #     python-version: '3.8'
     - name: Install dependencies
       run: pip install -r requirements-project-structure.txt
     - name: Copy project structure definition & script
@@ -38,9 +38,9 @@ jobs:
         cp project_structure.yml ${{ steps.vars.outputs.project_structure }}
         echo $(ls)
     - name: Checkout branch to enforce structure on
-      if: ${{ github.event.inputs.apply_to_branch }}
+      if: github.event.inputs.apply_to_branch
       run: |
-        git checkout ${{ steps.vars.outputs.apply_to_branch }}
+        git checkout ${{ github.event.inputs.apply_to_branch}}
     - name: Enforce structureon branch
       run: |
         python ${{ steps.vars.outputs.script }} --project_structure_file ${{ steps.vars.outputs.project_structure }}
@@ -67,4 +67,4 @@ jobs:
     #     git config --global user.name 'Github Actions'
     #     git config --global user.email 'github.actions@users.noreply.github.com'
     #     git commit -am "Github action: enforced project structure"
-    #     git push origin ${{ steps.vars.outputs.apply_to_branch }}
+    #     git push
