@@ -1,0 +1,12 @@
+- intent: greet
+  examples: |
+    - hey
+    - hello
+    - hi
+    - hello there
+    - good morning
+    - good evening
+- synonym: cold
+  examples: |
+    - cool
+    - icy
