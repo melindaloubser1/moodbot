@@ -1,3 +1,4 @@
+nlu:
 - intent: greet
   examples: |
     - hey

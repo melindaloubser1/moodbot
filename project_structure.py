@@ -299,11 +299,13 @@ def apply_project_structure(project_structure: ProjectStructure):
     for filename in nlu_files:
         target_keys =  target_keys_per_file.get(filename, [])
         if not target_keys:
+            logger.warning(f"No data found for file {filename}; deleting {filename}")
             os.remove(filename)
             continue
         contents_per_file = get_training_data_for_keys(
             nlu_data, target_keys
         )
+        logger.warning(f"Writing data to file {filename}")
         writer.dump(filename, contents_per_file)
 
 
