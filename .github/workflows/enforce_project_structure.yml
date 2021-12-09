@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
     inputs: {}
 
+    
 jobs:
   enforce_project_structure:
     runs-on: ubuntu-latest
