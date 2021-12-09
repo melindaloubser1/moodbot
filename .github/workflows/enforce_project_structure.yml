@@ -10,7 +10,7 @@ on:
       apply_to_branch:
         description: 'Branch to enforce project structure on'
         required: true
-        default: 'main'
+        default: ''
 
 
 
@@ -20,15 +20,18 @@ jobs:
     runs-on: ubuntu-latest
     name: Enforce Project Structure
     steps:
+    - name: Set branches
+      run: |
+        echo "Apply workflow to branch: ${{ github.event.inputs.apply_to_branch }}"
     - name: Checkout project structure definition & script 
       uses: actions/checkout@v2
       with:
         fetch-depth: '0'
-    - name: Set branches
+    - name: Copy project structure definition & script
       run: |
-        echo "Apply workflow to branch: ${{ github.event.inputs.apply_to_branch }}"
-    # - name: Copy project structure definition & script
-    #   run: ''
+        echo $(git branch -l)
+        echo $(ls)
+        echo $(`pwd`)
     # - name: Checkout target branch
     #   uses: actions/checkout@v2
     #   with:
