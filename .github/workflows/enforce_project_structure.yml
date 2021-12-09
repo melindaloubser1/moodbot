@@ -20,15 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     name: Enforce Project Structure
     steps:
-    - name: Set branches
-      run: |
-        echo "Running workflow from branch: ${{ GITHUB_REF }}"
-        echo "Apply workflow to branch: ${{ github.event.inputs.apply_to_branch }}"
     - name: Checkout project structure definition & script 
       uses: actions/checkout@v2
       with:
         fetch-depth: '0'
-        ref: ${{ GITHUB_REF }}
+    - name: Set branches
+      run: |
+        echo "Apply workflow to branch: ${{ github.event.inputs.apply_to_branch }}"
     # - name: Copy project structure definition & script
     #   run: ''
     # - name: Checkout target branch
