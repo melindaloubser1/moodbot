@@ -1,10 +1,9 @@
 from pytablewriter import MarkdownTableWriter
 import json
 
-
 def intent_table():
     writer = MarkdownTableWriter()
-    writer.table_name = "Intent Cross-Validation Results (3 folds)"
+    writer.table_name = "Intent Cross-Validation Results Comparison"
 
     with open("results/intent_report.json", "r") as f:
         data = json.loads(f.read())
@@ -37,7 +36,7 @@ def intent_table():
 def entity_table():
 
     writer = MarkdownTableWriter()
-    writer.table_name = "Entity Cross-Validation Results (5 folds)"
+    writer.table_name = "Entity Cross-Validation Results"
 
     with open("results/DIETClassifier_report.json", "r") as f:
         data = json.loads(f.read())

@@ -35,6 +35,7 @@ jobs:
         TARGET_BRANCH=${{ github.event.pull_request.base.ref }}
         LAST_RESULTS_ON_TARGET_BRANCH_URL=$(gsutil ls ${{ secrets.STORAGE_BUCKET_URL }}/cross-validation-results/ | grep main | sort -k2 | tail -n1)
         LAST_RESULTS_ON_TARGET_BRANCH_PATH=$(basename $LAST_RESULTS_ON_TARGET_BRANCH_URL)
+        mkdir $LAST_RESULTS_ON_TARGET_BRANCH_PATH
         gsutil -m cp -r ${LAST_RESULTS_ON_TARGET_BRANCH_URL} ${LAST_RESULTS_ON_TARGET_BRANCH_PATH}
     - name: Upload new results to storage bucket
       run: |
