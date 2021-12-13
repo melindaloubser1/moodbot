@@ -1,8 +1,0 @@
-version: "2.0"
-responses:
-  utter_faq/ask_name:
-  - text: "I am Moodbot, with some bells and whistles"
-  utter_faq/ask_age:
-  - text: "Probably younger than you"
-  utter_faq/ask_builder:
-  - text: "Not sure who built me!"
