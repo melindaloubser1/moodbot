@@ -1,13 +1,13 @@
 nlu:
-- intent: ask_name
+- intent: faq/ask_name
   examples: |
     - whats your name
     - wut ur name
-- intent: ask_age
+- intent: faq/ask_age
   examples: |
     - how old are you?
     - what is your age?
-- intent: ask_builder
+- intent: faq/ask_builder
   examples: |
     - who built you?
     - who made you?
