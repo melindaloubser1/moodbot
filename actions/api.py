@@ -1,7 +1,7 @@
 import random
 
 
-class Api:
+class SingletonApiClass:
     class __impl:
         """ Implementation of the Singleton class """
         def get_result(self): 

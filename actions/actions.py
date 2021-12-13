@@ -12,6 +12,7 @@ from typing import Any, Text, Dict, List
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from actions.api import SingletonApiClass
+import time
 
 class ActionHelloWorld(Action):
 
@@ -23,6 +24,7 @@ class ActionHelloWorld(Action):
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
         client_result = SingletonApiClass().get_result()
+
         dispatcher.utter_message(text=f"Result! {client_result}")
 
         return []
