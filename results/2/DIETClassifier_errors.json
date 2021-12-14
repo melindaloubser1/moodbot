@@ -1,0 +1,14 @@
+[
+  {
+    "text": "entity",
+    "entities": [
+      {
+        "start": 0,
+        "end": 6,
+        "value": "entity",
+        "entity": "entity"
+      }
+    ],
+    "predicted_entities": []
+  }
+]

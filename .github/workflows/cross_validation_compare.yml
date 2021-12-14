@@ -22,23 +22,30 @@ jobs:
         python-version: '3.8'
     - name: Install dependencies
       run: pip install -r requirements.txt
-    - name: Run cross-validation
-      run: rasa test nlu --cross-validation -f 2
-    - name: Authenticate with gcloud 🎫
-      uses: google-github-actions/setup-gcloud@daadedc81d5f9d3c06d2c92f49202a3cc2b919ba 
+    # - name: Run cross-validation
+    #   run: rasa test nlu --cross-validation -f 2
+    - name: Run comparison
+      run: python format_compard_nlu_results.py
+    - name: post cross-val results to PR
+      uses: amn41/comment-on-pr@comment-file-contents
+      continue-on-error: true
       with:
-        version: "${{ env.GCLOUD_VERSION }}"
-        service_account_email: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_NAME }}
-        service_account_key: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}
-    - name: Download previous results
-      run: |
-        TARGET_BRANCH=${{ github.event.pull_request.base.ref }}
-        LAST_RESULTS_ON_TARGET_BRANCH_URL=$(gsutil ls ${{ secrets.STORAGE_BUCKET_URL }}/cross-validation-results/ | grep main | sort -k2 | tail -n1)
-        LAST_RESULTS_ON_TARGET_BRANCH_PATH=$(basename $LAST_RESULTS_ON_TARGET_BRANCH_URL)
-        mkdir $LAST_RESULTS_ON_TARGET_BRANCH_PATH
-        gsutil -m cp -r ${LAST_RESULTS_ON_TARGET_BRANCH_URL} ${LAST_RESULTS_ON_TARGET_BRANCH_PATH}
-    - name: Upload new results to storage bucket
-      run: |
-        NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
-        echo $NAME
-        gsutil -m cp -r results ${{ secrets.STORAGE_BUCKET_URL }}/cross-validation-results/"${NAME}"/
+        msg: results.md
+    # - name: Authenticate with gcloud 🎫
+    #   uses: google-github-actions/setup-gcloud@daadedc81d5f9d3c06d2c92f49202a3cc2b919ba 
+    #   with:
+    #     version: "${{ env.GCLOUD_VERSION }}"
+    #     service_account_email: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_NAME }}
+    #     service_account_key: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}
+    # - name: Download previous results
+    #   run: |
+    #     TARGET_BRANCH=${{ github.event.pull_request.base.ref }}
+    #     LAST_RESULTS_ON_TARGET_BRANCH_URL=$(gsutil ls ${{ secrets.STORAGE_BUCKET_URL }}/cross-validation-results/ | grep main | sort -k2 | tail -n1)
+    #     LAST_RESULTS_ON_TARGET_BRANCH_PATH=$(basename $LAST_RESULTS_ON_TARGET_BRANCH_URL)
+    #     mkdir $LAST_RESULTS_ON_TARGET_BRANCH_PATH
+    #     gsutil -m cp -r ${LAST_RESULTS_ON_TARGET_BRANCH_URL} ${LAST_RESULTS_ON_TARGET_BRANCH_PATH}
+    # - name: Upload new results to storage bucket
+    #   run: |
+    #     NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
+    #     echo $NAME
+    #     gsutil -m cp -r results ${{ secrets.STORAGE_BUCKET_URL }}/cross-validation-results/"${NAME}"/

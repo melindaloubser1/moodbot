@@ -1,0 +1,50 @@
+[
+  {
+    "text": "whats your name",
+    "intent_response_key_target": "faq/ask_name",
+    "intent_response_key_prediction": {
+      "name": "",
+      "confidence": 0.0
+    }
+  },
+  {
+    "text": "what is your age?",
+    "intent_response_key_target": "faq/ask_age",
+    "intent_response_key_prediction": {
+      "name": "",
+      "confidence": 0.0
+    }
+  },
+  {
+    "text": "who made you?",
+    "intent_response_key_target": "faq/ask_builder",
+    "intent_response_key_prediction": {
+      "name": "",
+      "confidence": 0.0
+    }
+  },
+  {
+    "text": "wut ur name",
+    "intent_response_key_target": "faq/ask_name",
+    "intent_response_key_prediction": {
+      "name": "",
+      "confidence": 0.0
+    }
+  },
+  {
+    "text": "how old are you?",
+    "intent_response_key_target": "faq/ask_age",
+    "intent_response_key_prediction": {
+      "name": "",
+      "confidence": 0.0
+    }
+  },
+  {
+    "text": "who built you?",
+    "intent_response_key_target": "faq/ask_builder",
+    "intent_response_key_prediction": {
+      "name": "",
+      "confidence": 0.0
+    }
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "text": "can you help me with the rasa core ?",
+    "entities": [
+      {
+        "start": 30,
+        "end": 34,
+        "value": "core",
+        "entity": "product"
+      }
+    ],
+    "predicted_entities": []
+  },
+  {
+    "text": "can you explain rasa core",
+    "entities": [
+      {
+        "start": 21,
+        "end": 25,
+        "value": "core",
+        "entity": "product"
+      }
+    ],
+    "predicted_entities": []
+  },
+  {
+    "text": "entity",
+    "entities": [
+      {
+        "start": 0,
+        "end": 6,
+        "value": "entity",
+        "entity": "entity"
+      }
+    ],
+    "predicted_entities": []
+  }
+]
