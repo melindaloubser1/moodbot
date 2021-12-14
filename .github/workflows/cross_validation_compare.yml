@@ -25,7 +25,7 @@ jobs:
     # - name: Run cross-validation
     #   run: rasa test nlu --cross-validation -f 2
     - name: Run cross-val comparison
-      run: python format_compare_nlu_results.py
+      run: python format_compared_nlu_results.py
     - name: Post cross-val comparison to PR
       uses: amn41/comment-on-pr@comment-file-contents
       continue-on-error: true
