@@ -24,9 +24,9 @@ jobs:
       run: pip install -r requirements.txt
     # - name: Run cross-validation
     #   run: rasa test nlu --cross-validation -f 2
-    - name: Run comparison
-      run: python format_compard_nlu_results.py
-    - name: post cross-val results to PR
+    - name: Run cross-val comparison
+      run: python format_compare_nlu_results.py
+    - name: Post cross-val comparison to PR
       uses: amn41/comment-on-pr@comment-file-contents
       continue-on-error: true
       with:
