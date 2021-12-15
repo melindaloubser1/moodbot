@@ -21,7 +21,7 @@ jobs:
       with:
         python-version: '3.8'
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: pip install -r requirements-format-results.txt
     # - name: Run cross-validation
     #   run: rasa test nlu --cross-validation -f 2
     - name: Run cross-val comparison
