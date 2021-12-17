@@ -83,3 +83,19 @@ nlu:
     - are you a human?
     - am I talking to a bot?
     - am I talking to a human?
+
+
+- synonym: big
+  examples: |
+    - huge
+    - ginourmous
+
+- lookup: no
+  examples: |
+    - nope
+    - no
+    - no way
+
+- regex: number
+  examples: |
+    - \d+
