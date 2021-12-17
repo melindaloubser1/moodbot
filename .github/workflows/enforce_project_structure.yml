@@ -12,6 +12,12 @@ on:
         required: true
         default: ''
 
+env:
+  COMMIT_USERNAME: 'Github Actions'
+  COMMIT_EMAIL: 'github.actions@users.noreply.github.com'
+  DATA_DIRECTORY: 'data'
+  COMMIT_MESSAGE: 'Github action: enforced project structure'
+
 jobs:
   enforce_project_structure:
     runs-on: ubuntu-latest
@@ -52,8 +58,8 @@ jobs:
     - name: Commit changes if any were made
       if: steps.git_diff.outcome=='failure'
       run: |
-        git config --global user.name 'Github Actions'
-        git config --global user.email 'github.actions@users.noreply.github.com'
-        git add data/*
-        git commit -am "Github action: enforced project structure"
+        git config --global user.name '${{ env.COMMIT_USERNAME }}'
+        git config --global user.email '${{ env.COMMIT_EMAIL }}'
+        git add '${{ env.DATA_DIRECTORY }}'
+        git commit -am '${{ env.COMMIT_MESSAGE }}'
         git push
