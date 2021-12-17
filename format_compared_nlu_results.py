@@ -4,6 +4,7 @@ from collections import defaultdict
 import logging
 from pytablewriter import MarkdownTableWriter
 import json
+import pandas as pd
 
 logger = logging.getLogger(__file__)
 
@@ -13,9 +14,6 @@ RESPONSE_SELECTION_REPORT_NAME = "response_selection_report"
 
 
 class RasaNLUTestResult:
-    intent_report_label_type = "intents"
-    entity_report_label_type = "entities"
-    response_selection_report_label_type = "retrieval_intents"
     intent_report_filename = "intent_report.json"
     entity_report_filename = "DIETClassifier_report.json"
     response_selection_report_filename = "response_selection_report.json"
@@ -26,6 +24,25 @@ class RasaNLUTestResult:
         self.intent_report = {}
         self.entity_report = {}
         self.response_selection_report = {}
+
+    def get_labels(self, report_type):
+        return getattr(self, f"{report_type}_labels")()
+
+    def get_report(self, report_type):
+        return getattr(self, f"{report_type}_report")()
+
+    def get_report_df(self, report_type):
+        return getattr(self, f"{report_type}_report_df")()
+
+    def report_df(self, report_type):
+        report = self.get_report(report_type)
+        df = pd.DataFrame.from_dict(report).transpose()
+        df.name = self.name
+        try:
+            df.drop("accuracy",inplace=True)
+        except KeyError:
+            pass
+        return df
 
     def load_from_results_dir(self):
         self.intent_report = self.load_report(self.intent_report_filename)
@@ -44,10 +61,6 @@ class RasaNLUTestResult:
         return data
 
     @classmethod
-    def label_type_for_report(cls, report_type):
-        return getattr(cls, f"{report_type}_label_type")
-
-    @classmethod
     def remove_excluded_classes(cls, classes):
         for excluded_class in ["accuracy"]:
             try:
@@ -56,15 +69,24 @@ class RasaNLUTestResult:
                 pass
         return classes
 
-    def intents(self) -> List:
+    @classmethod
+    def drop_excluded_classes(cls, df):
+        for excluded_class in ["accuracy"]:
+            try:
+                df.drop(excluded_class, inplace = True)
+            except:
+                pass
+        return df
+
+    def intent_labels(self) -> List:
         intents = list(self.intent_report.keys())
         return self.remove_excluded_classes(intents)
 
-    def entities(self) -> List:
+    def entity_labels(self) -> List:
         entities = list(self.entity_report.keys())
         return self.remove_excluded_classes(entities)
 
-    def retrieval_intents(self) -> List:
+    def response_selection_labales(self) -> List:
         retrieval_intents = list(self.response_selection_report.keys())
         return self.remove_excluded_classes(retrieval_intents)
 
@@ -91,14 +113,13 @@ class RasaNLUTestResult:
     def create_table(
         self, name, report_type, metrics=["support", "f1-score"], sort_by="support"
     ):
-        report = getattr(self, report_type)()
-        label_type = self.label_type_for_report(report_type)
+        report = self.get_report(report_type)
 
         writer = MarkdownTableWriter()
         writer.table_name = name
-        writer.headers = [label_type] + metrics
+        writer.headers = [report_type] + metrics
 
-        labels = getattr(self, label_type)()
+        labels = self.get_labels(report_type)
         labels.sort(key=lambda x: report[x][sort_by], reverse=True)
         writer.value_matrix = [
             [label]
@@ -146,15 +167,19 @@ class CombinedRasaNLUTestResults(RasaNLUTestResult):
         )
         return list(labels)
 
-    def combine_reports(self, report_type) -> Dict:
-        label_type = self.label_type_for_report(report_type)
-        reports = {item: {} for item in getattr(self, label_type)()}
-        for attrib in getattr(self, label_type)():
-            for report in self.results:
-                reports[attrib][report.name] = getattr(report, report_type).get(
-                    attrib, {}
-                )
-        return reports
+    def join_report_dfs(self, report_type) -> Dict:
+        joined_df = self.results[0].get_report_df(report_type)
+        hierarchical_headers = pd.MultiIndex.from_tuples(zip(joined_df.columns, [joined_df.name]*len(joined_df.columns)))
+        joined_df.columns = hierarchical_headers
+        other_dfs = [result.get_report_df(report_type) for result in self.results[1:]]
+        for df in other_dfs:
+            hierarchical_headers = pd.MultiIndex.from_tuples(zip(df.columns, [df.name]*len(df.columns)))
+            orig_columns = list(df.columns)
+            df.columns = hierarchical_headers
+            joined_df = joined_df.join(df, how="outer")
+            df.columns = orig_columns
+        self.drop_excluded_classes(joined_df)
+        return joined_df
 
     def results_directories(self) -> List:
         return [report.results_directory for report in self.results]
@@ -162,13 +187,13 @@ class CombinedRasaNLUTestResults(RasaNLUTestResult):
     def result_sets_names(self) -> List:
         return [report.name for report in self.results]
 
-    def intents(self) -> List:
+    def intent_labels(self) -> List:
         return self.collect_labels("intents")
 
-    def entities(self) -> List:
+    def entity_labels(self) -> List:
         return self.collect_labels("entities")
 
-    def retrieval_intents(self) -> List:
+    def response_selection_labels()(self) -> List:
         return self.collect_labels("retrieval_intents")
 
     def intent_report(self) -> Dict:
@@ -361,6 +386,8 @@ other_results = RasaNLUTestResult("results/2", "Incoming")
 other_results.load_from_results_dir()
 combined_results = CombinedRasaNLUTestResults([base_results, other_results])
 combined_results.write_combined_json_report()
+
+intent_df = pd.DataFrame.from_dict(base_results.intent_report)
 
 loaded_results = CombinedRasaNLUTestResults.load_from_combined_json_report()
 
