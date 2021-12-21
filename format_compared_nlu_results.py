@@ -2,63 +2,33 @@ import os
 from typing import Dict, List, Text, Optional
 from collections import defaultdict
 import logging
-from pytablewriter import MarkdownTableWriter
 import json
 import pandas as pd
 
 logger = logging.getLogger(__file__)
 
-INTENT_REPORT_NAME = "intent_report"
-ENTITY_REPORT_NAME = "entity_report"
-RESPONSE_SELECTION_REPORT_NAME = "response_selection_report"
 
+class NLUEvaluationResult:
+    def __init__(self, report_filepath=None, name=None, label_name=None):
+        self.report_filepath = report_filepath
+        self.name = name or os.path.basename(report_filepath)
+        self.label_name = label_name
 
-class RasaNLUTestResult:
-    intent_report_filename = "intent_report.json"
-    entity_report_filename = "DIETClassifier_report.json"
-    response_selection_report_filename = "response_selection_report.json"
-
-    def __init__(self, results_dir=None, name=None):
-        self.results_directory = results_dir
-        self.name = name or results_dir
-        self.intent_report = {}
-        self.entity_report = {}
-        self.response_selection_report = {}
-
-    def get_labels(self, report_type):
-        return getattr(self, f"{report_type}_labels")()
-
-    def get_report(self, report_type):
-        return getattr(self, f"{report_type}_report")()
-
-    def get_report_df(self, report_type):
-        return getattr(self, f"{report_type}_report_df")()
-
-    def report_df(self, report_type):
-        report = self.get_report(report_type)
-        df = pd.DataFrame.from_dict(report).transpose()
-        df.name = self.name
+    def load_report_from_file(self) -> Dict:
         try:
-            df.drop("accuracy",inplace=True)
-        except KeyError:
-            pass
-        return df
-
-    def load_from_results_dir(self):
-        self.intent_report = self.load_report(self.intent_report_filename)
-        self.entity_report = self.load_report(self.entity_report_filename)
-        self.response_selection_report = self.load_report(
-            self.response_selection_report_filename
-        )
-
-    def load_report(self, filename) -> Dict:
-        filepath = os.path.join(self.results_directory, filename)
-        try:
-            with open(filepath, "r") as f:
-                data = json.loads(f.read())
+            with open(self.report_filepath, "r") as f:
+                self.report = json.loads(f.read())
         except FileNotFoundError:
-            return {}
-        return data
+            self.report = {}
+        self.load_df()
+
+    def load_df(self):
+        df = pd.DataFrame.from_dict(self.report).transpose()
+        df.name = self.name
+        df.columns.set_names("metric", inplace=True)
+        if self.label_name:
+            df.index.set_names(self.label_name, inplace=True)
+        self.df = self.drop_excluded_classes(df)
 
     @classmethod
     def remove_excluded_classes(cls, classes):
@@ -73,333 +43,105 @@ class RasaNLUTestResult:
     def drop_excluded_classes(cls, df):
         for excluded_class in ["accuracy"]:
             try:
-                df.drop(excluded_class, inplace = True)
+                df.drop(excluded_class, inplace=True)
             except:
                 pass
         return df
 
-    def intent_labels(self) -> List:
-        intents = list(self.intent_report.keys())
-        return self.remove_excluded_classes(intents)
+    def sort_by_support(self):
+        self.df.sort_values(by="support", ascending=False, inplace=True)
 
-    def entity_labels(self) -> List:
-        entities = list(self.entity_report.keys())
-        return self.remove_excluded_classes(entities)
-
-    def response_selection_labales(self) -> List:
-        retrieval_intents = list(self.response_selection_report.keys())
-        return self.remove_excluded_classes(retrieval_intents)
-
-    @classmethod
-    def format_report_cell(cls, metric, value):
-        if not value:
-            return "N/A"
-        if metric in ["f1-score", "precision", "recall"]:
-            try:
-                formatted = f"{float(value):.3f}"
-                return formatted
-            except ValueError:
-                return value
-        if metric.startswith("confused_with"):
-            return ", ".join(
-                [
-                    f"{label_confused_with}({num_times_confused})"
-                    for label_confused_with, num_times_confused in value.items()
-                ]
-            )
-        else:
-            return value
-
-    def create_table(
-        self, name, report_type, metrics=["support", "f1-score"], sort_by="support"
-    ):
-        report = self.get_report(report_type)
-
-        writer = MarkdownTableWriter()
-        writer.table_name = name
-        writer.headers = [report_type] + metrics
-
-        labels = self.get_labels(report_type)
-        labels.sort(key=lambda x: report[x][sort_by], reverse=True)
-        writer.value_matrix = [
-            [label]
-            + [
-                self.format_report_cell(metric, report[label].get(metric))
-                for metric in metrics
-            ]
-            for label in labels
-        ]
-
-        return writer.dumps()
-
-    def intent_table(
-        self,
-        name="Intent Evaluation Report",
-        metrics=["support", "f1-score", "confused_with"],
-        sort_by="support",
-    ) -> Text:
-        return self.create_table(name, INTENT_REPORT_NAME, metrics, sort_by)
-
-    def entity_table(
-        self,
-        name="Entity Evaluation Report",
-        metrics=["support", "f1-score", "precision", "recall"],
-        sort_by="support",
-    ) -> Text:
-        return self.create_table(name, ENTITY_REPORT_NAME, metrics, sort_by)
-
-    def response_selection_table(
-        self,
-        name="Response Selection Report",
-        metrics=["support", "f1-score", "confused_with"],
-        sort_by="support",
-    ) -> Text:
-        return self.create_table(name, RESPONSE_SELECTION_REPORT_NAME, metrics, sort_by)
+    def create_html_table(self, columns=None):
+        if not columns:
+            columns = self.df.columns
+        html_table = self.df[columns].to_html()
+        return html_table
 
 
-class CombinedRasaNLUTestResults(RasaNLUTestResult):
-    def __init__(self, results_to_combine: List[RasaNLUTestResult]):
+class CombinedNLUEvaluationResults(NLUEvaluationResult):
+    def __init__(self, results_to_combine: List[NLUEvaluationResult], label_name=None):
         self.results = results_to_combine
+        self.label_name = label_name
+        self.df = self.join_dfs()
 
-    def collect_labels(self, label_type):
-        labels = set(
-            [item for report in self.results for item in getattr(report, label_type)()]
+    def join_dfs(self) -> pd.DataFrame:
+        joined_df = pd.concat(
+            [result.df for result in self.results],
+            axis=1,
+            keys=[result.name for result in self.results],
         )
-        return list(labels)
-
-    def join_report_dfs(self, report_type) -> Dict:
-        joined_df = self.results[0].get_report_df(report_type)
-        hierarchical_headers = pd.MultiIndex.from_tuples(zip(joined_df.columns, [joined_df.name]*len(joined_df.columns)))
-        joined_df.columns = hierarchical_headers
-        other_dfs = [result.get_report_df(report_type) for result in self.results[1:]]
-        for df in other_dfs:
-            hierarchical_headers = pd.MultiIndex.from_tuples(zip(df.columns, [df.name]*len(df.columns)))
-            orig_columns = list(df.columns)
-            df.columns = hierarchical_headers
-            joined_df = joined_df.join(df, how="outer")
-            df.columns = orig_columns
+        joined_df.columns.set_names(["result_set", "metric"], inplace=True)
+        joined_df = joined_df.swaplevel(axis="columns")
+        if self.label_name:
+            joined_df.index.set_names([self.label_name], inplace=True)
         self.drop_excluded_classes(joined_df)
         return joined_df
 
-    def results_directories(self) -> List:
-        return [report.results_directory for report in self.results]
-
-    def result_sets_names(self) -> List:
-        return [report.name for report in self.results]
-
-    def intent_labels(self) -> List:
-        return self.collect_labels("intents")
-
-    def entity_labels(self) -> List:
-        return self.collect_labels("entities")
-
-    def response_selection_labels()(self) -> List:
-        return self.collect_labels("retrieval_intents")
-
-    def intent_report(self) -> Dict:
-        return self.combine_reports(INTENT_REPORT_NAME)
-
-    def entity_report(self) -> Dict:
-        return self.combine_reports(ENTITY_REPORT_NAME)
-
-    def response_selection_report(self) -> Dict:
-        return self.combine_reports(RESPONSE_SELECTION_REPORT_NAME)
-
-    def combined_reports(self) -> Dict:
-        combined_reports = {
-            "result_sets_combined": self.result_sets_names(),
-            "combined_intent_report": self.intent_report(),
-            "combined_entity_report": self.entity_report(),
-            "combined_response_selection_report": self.response_selection_report(),
-        }
-        return combined_reports
-
-    @classmethod
-    def format_report_cell(cls, metric, value):
-        if not value:
-            formatted = "N/A"
-        elif any(
-            [
-                float_metric in metric
-                for float_metric in ["f1-score", "precision", "recall"]
-            ]
-        ):
-            try:
-                formatted = f"{float(value):.3f}"
-                if "Change" in metric and float(value) > 0:
-                    formatted = "+" + formatted
-                    logger.error(formatted)
-            except ValueError:
-                formatted = value
-        
-        elif "confused_with" in metric:
-            formatted = ", ".join(
-                [
-                    f"{label_confused_with}({num_times_confused})"
-                    for label_confused_with, num_times_confused in value.items()
-                ]
-            )
-        else:
-            formatted = value
-        return formatted
-
-    @classmethod
-    def difference_column_name(cls, base_report_name, other_report_name, metric):
-        return f"Change in {metric} ({other_report_name} - {base_report_name})"
-
-    @classmethod
-    def difference_between_reports(
-        cls, report, base_report_name, other_report_name, label, metric
-    ):
-        base_report_metric = report.get(label, {}).get(base_report_name, {}).get(metric)
-        other_report_metric = (
-            report.get(label, {}).get(other_report_name, {}).get(metric)
+    def order_metrics(self, metrics_order=None):
+        if not metrics_order:
+            metrics_order = self.df.columns.get_level_values("metric")
+        metrics_order_dict = {v: k for k, v in enumerate(metrics_order)}
+        self.df.sort_index(
+            axis="columns",
+            level="metric",
+            key=lambda index: pd.Index(
+                [metrics_order_dict.get(x) for x in index],
+                name="metric"
+            ),
+            inplace=True,
+            sort_remaining=False,
         )
-        try:
-            difference = other_report_metric - base_report_metric
-        except TypeError:
-            if not base_report_metric and not other_report_metric:
-                difference = f"Label not present in either report"
-            else:
-                report_present = (
-                    other_report_name if other_report_metric else base_report_name
-                )
-                difference = f"Label only present in {report_present}"
-        return difference
 
-    # def get_comparison_for_metric(self, report_type, metric):
-    #     label_type = self.label_type_for_report(report_type)
-    #     report = getattr(self, report_type)()
-    #     base_report = self.results[0]
-    #     labels = getattr(self, label_type)()
-    #     differences = {
-    #         self.difference_column_name(base_report.name, other_report.name, metric): {
-    #             label: self.difference_between_reports(
-    #                 report, base_report.name, other_report.name, label, metric
-    #             )
-    #             for label in labels
-    #         }
-    #         for other_report in self.results[1:]
-    #     }
+    def order_result_sets(self, result_set_order=None):
+        if not result_set_order:
+            result_set_order = [result.name for result in self.results]
+        result_set_order_dict = {v: k for k, v in enumerate(result_set_order)}
+        self.df.sort_index(
+            axis="columns",
+            level="result_set",
+            key=lambda index: pd.Index(
+                [result_set_order_dict.get(x) for x in index],
+                name="result_set"
+            ),
+            inplace=True,
+            sort_remaining=False,
+        )
 
-    #     return differences
-
-    def get_columns(self, metrics, include_difference_columns=True):
-        base_report_name = self.result_sets_names()[0]
-        columns = []
-        for metric in metrics:
-            for ix, name in enumerate(self.result_sets_names()):
-                columns.append(f"{metric} ({name})")
-                if include_difference_columns and ix > 0 and metric != "confused_with":
-                    columns.append(
-                        self.difference_column_name(base_report_name, name, metric)
-                    )
-        return columns
-
-    def get_row_values(self, report, label, metrics, include_difference_columns):
-        base_report_name = self.result_sets_names()[0]
-        row_values = []
-        for metric in metrics:
-            for ix, name in enumerate(self.result_sets_names()):
-                row_values.append(self.format_report_cell(metric, report[label][name].get(metric)))
-                if include_difference_columns and ix > 0 and metric != "confused_with":
-                    row_values.append(
-                        self.format_report_cell(self.difference_column_name(base_report_name, name, metric), self.difference_between_reports(
-                            report, base_report_name, name, label, metric
-                        ))
-                    )
-        return row_values
-
-    def create_table(
-        self,
-        name,
-        report_type,
-        metrics=["support", "f1-score"],
-        sort_by="support",
-        include_difference_columns=True,
-    ):
-        report = getattr(self, report_type)()
-        first_report = getattr(self.results[0], report_type)
-        label_type = self.label_type_for_report(report_type)
-
-        writer = MarkdownTableWriter()
-        writer.table_name = name
-
-        columns = self.get_columns(metrics, include_difference_columns)
-        writer.headers = [label_type] + columns
-
-        labels = getattr(self, label_type)()
-        labels.sort(key=lambda x: first_report.get(x, {}).get(sort_by, 0), reverse=True)
-        writer.value_matrix = [
-            [label]
-            + self.get_row_values(report, label, metrics, include_difference_columns)
-            for label in labels
-        ]
-
-        return writer.dumps()
-
-    def write_combined_json_report(self, filepath=""):
+    def write_combined_json_report(self, filepath):
         report_to_write = self.combined_reports()
-        if not filepath:
-            filepath = f"combined_nlu_reports.json"
         with open(filepath, "w+") as fh:
             json.dump(report_to_write, fh, indent=2)
 
     @classmethod
     def results_from_combined_reports(cls, combined_reports):
-        result_names = combined_reports["result_sets_combined"]
-        combined_results = {name: defaultdict(dict) for name in result_names}
-        for report_type in [
-            INTENT_REPORT_NAME,
-            ENTITY_REPORT_NAME,
-            RESPONSE_SELECTION_REPORT_NAME,
-        ]:
-            for label, values in combined_reports[f"combined_{report_type}"].items():
-                for report_name, metrics in values.items():
-                    if metrics:
-                        combined_results[report_name][report_type][label] = metrics
-
-        results = []
-        for name, reports in combined_results.items():
-            result = RasaNLUTestResult(name=name)
-            for report_type in [
-                INTENT_REPORT_NAME,
-                ENTITY_REPORT_NAME,
-                RESPONSE_SELECTION_REPORT_NAME,
-            ]:
-                setattr(result, report_type, reports[report_type])
-            results.append(result)
-        return results
+        pass
 
     @classmethod
-    def load_from_combined_json_report(cls, filepath=""):
-        if not filepath:
-            filepath = f"combined_nlu_reports.json"
+    def load_from_combined_json_report(cls, filepath):
         with open(filepath, "r") as fh:
             loaded_report = json.load(fh)
         return cls(cls.results_from_combined_reports(loaded_report))
 
 
-base_results = RasaNLUTestResult("results/1", "Stable")
-base_results.load_from_results_dir()
-other_results = RasaNLUTestResult("results/2", "Incoming")
-other_results.load_from_results_dir()
-combined_results = CombinedRasaNLUTestResults([base_results, other_results])
-combined_results.write_combined_json_report()
+a = NLUEvaluationResult("results/1/intent_report.json", "a", "intent")
+a.load_report_from_file()
+a.sort_by_support()
 
-intent_df = pd.DataFrame.from_dict(base_results.intent_report)
+# table = a.create_html_table()
+# with open("formatted_result.html", "w") as fh:
+#     fh.write(table)
 
-loaded_results = CombinedRasaNLUTestResults.load_from_combined_json_report()
+b = NLUEvaluationResult("results/2/intent_report.json", "b", "intent")
+b.load_report_from_file()
+b.sort_by_support()
 
-intent_table = loaded_results.intent_table("Intent Results Comparison")
-entity_table = loaded_results.entity_table("Entity Results Comparison")
-response_selection_table = loaded_results.response_selection_table(
-    "Response Selection Results Comparison"
-)
+c = NLUEvaluationResult("results/2/intent_report.json", "c", "intent")
+c.load_report_from_file()
+c.sort_by_support()
 
-with open("results.md", "w+") as f:
-    f.write(intent_table)
-    f.write("\n\n\n")
-    f.write(entity_table)
-    f.write("\n\n\n")
-    f.write(response_selection_table)
+
+combined_results = CombinedNLUEvaluationResults([a, b, c], "intent")
+combined_results.order_result_sets(["b", "c", "a"])
+combined_results.order_columns_by_metrics()
+combined_results.df
+self = combined_results
