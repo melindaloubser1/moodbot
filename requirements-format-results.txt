@@ -1,1 +1,1 @@
-pytablewriter
+pandas~=1.3.5

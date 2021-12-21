@@ -36,7 +36,7 @@ jobs:
         gsutil -m cp -r ${LAST_RESULTS_ON_TARGET_BRANCH_URL} ${LAST_RESULTS_ON_TARGET_BRANCH_PATH}
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
+        pip install -r requirements-rasa.txt
         pip install -r requirements-format-results.txt
     # - name: Run cross-validation
     #   run: |
