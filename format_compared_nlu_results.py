@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 import logging
 import json
 import pandas as pd
+import argparse
 
 logger = logging.getLogger(__file__)
 
@@ -225,7 +226,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         diff_df = self.df[metrics_to_diff].apply(diff_from_base)
         diff_df.drop(columns=result_set_name_for_base_of_comparison, level=1, inplace=True)
         diff_df = self.drop_non_numeric_metrics(diff_df)
-        diff_df.rename(columns=lambda col: f"({col} - {result_set_name_for_base_of_comparison})", level=1, inplace=True)
+        diff_df.rename(lambda col: f"({col} - {result_set_name_for_base_of_comparison})", axis=1, level=1, inplace=True)
         return diff_df
 
     def show_labels_with_changes(self):
@@ -237,19 +238,36 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         return combined_diff_df
 
 
-if __name__ == "__main__":
-    a = NLUEvaluationResult("a", "results/1/intent_report.json", "intent")
-    b = NLUEvaluationResult("b", "results/2/intent_report.json", "intent")
+def compare_and_format_results(result_dirs, outfile):
+    intent_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/intent_report.json", "intent") for result_dir in result_dirs]
+    combined_intent_results = CombinedNLUEvaluationResults("Intent Evaluation Comparison", intent_result_sets, "intent")
+    combined_intent_results.write_combined_json_report("combined_intent_report.json")
 
-    combined_results = CombinedNLUEvaluationResults("Intent Evaluation Comparison", [a, b], "intent")
-    combined_results.write_combined_json_report("combined_intent_report.json")
-
-    changes = combined_results.show_labels_with_changes()
-    changes = combined_results.sort_by_support(changes)
-    metrics_order=["support", "f1-score", "precision","recall","confused_with"]
-    changes = combined_results.order_metrics(changes, metrics_order=metrics_order)
+    intent_result_changes = combined_intent_results.show_labels_with_changes()
+    intent_result_changes = combined_intent_results.sort_by_support(intent_result_changes)
     metrics_to_display=["support", "f1-score","confused_with"]
-    table = NLUEvaluationResult.create_html_table(changes, columns=metrics_to_display)
+    table = NLUEvaluationResult.create_html_table(intent_result_changes, columns=metrics_to_display)
 
-    with open("formatted_results.html", "w+") as fh:
+    with open(outfile, "w+") as fh:
         fh.write(table)
+
+
+def _create_argument_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Compare two sets of NLU evaluation results and format them as an HTML table")
+    parser.add_argument("--result_dirs", nargs="+", default=["results"], help="List of directories containing separate sets of NLU evaluation results")
+    parser.add_argument(
+        "--outfile",
+        help=(
+            "File to write HTML table to"
+        ),
+        default="formatted_compared_results.html",
+    )
+    return parser
+
+
+if __name__ == "__main__":
+    parser = _create_argument_parser()
+    args = parser.parse_args()
+    result_dirs = args.result_dirs
+    outfile = args.outfile
+    compare_and_format_results(result_dirs, outfile)

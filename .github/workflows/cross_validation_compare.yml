@@ -3,7 +3,7 @@ on:
     paths:
       - 'data/nlu/*'
       - 'config.yml'
-      - 'requirements.txt'
+      - 'requirements-rasa.txt'
       - '.github/workflows/cross_validation_compare.yml'
 
 env:
@@ -27,6 +27,7 @@ jobs:
         service_account_email: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_NAME }}
         service_account_key: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}
     - name: Download previous results
+      id: prev_results
       run: |
         TARGET_BRANCH=${{ github.event.pull_request.base.ref }}
         LAST_RESULTS_ON_TARGET_BRANCH_URL=$(gsutil ls ${{ secrets.STORAGE_BUCKET_URL }} | grep $TARGET_BRANCH | sort -k2 | tail -n1)
@@ -34,13 +35,14 @@ jobs:
         LAST_RESULTS_ON_TARGET_BRANCH_PATH=$(basename $LAST_RESULTS_ON_TARGET_BRANCH_URL)
         mkdir $LAST_RESULTS_ON_TARGET_BRANCH_PATH
         gsutil -m cp -r ${LAST_RESULTS_ON_TARGET_BRANCH_URL} ${LAST_RESULTS_ON_TARGET_BRANCH_PATH}
+        echo ::set-output name=LAST_RESULTS_ON_TARGET_BRANCH_PATH::"$LAST_RESULTS_ON_TARGET_BRANCH_PATH"
     - name: Install dependencies
       run: |
         pip install -r requirements-rasa.txt
         pip install -r requirements-format-results.txt
-    # - name: Run cross-validation
-    #   run: |
-    #     rasa test nlu --cross-validation -f 2
+    - name: Run cross-validation
+      run: |
+        rasa test nlu --cross-validation -f 2
     - name: Upload new results to storage bucket
       run: |
         NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
@@ -48,11 +50,11 @@ jobs:
         gsutil -m cp -r results ${{ secrets.STORAGE_BUCKET_URL }}/"${NAME}"/
 
     - name: Run cross-val comparison
-      run: python format_compared_nlu_results.py
+      run: python format_compared_nlu_results.py --result_dirs results ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }} --outfile formatted_compared_results.html
 
     - name: Post cross-val comparison to PR
       uses: amn41/comment-on-pr@comment-file-contents
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        msg: formatted_results.html
+        msg: formatted_compared_results.html

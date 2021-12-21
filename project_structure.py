@@ -349,7 +349,7 @@ def enforce_project_structure(project_structure_file):
 
 
 def _create_argument_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Collect data for scorecard.")
+    parser = argparse.ArgumentParser(description="Infer and/or enforce a prescriptive structure in your NLU files")
     parser.add_argument(
         "-infer",
         action="store_true",
