@@ -142,6 +142,6 @@ c.sort_by_support()
 
 combined_results = CombinedNLUEvaluationResults([a, b, c], "intent")
 combined_results.order_result_sets(["b", "c", "a"])
-combined_results.order_columns_by_metrics()
+combined_results.order_metrics(["support","f1-score","precision","recall","confused_with"])
 combined_results.df
 self = combined_results
