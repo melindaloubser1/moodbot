@@ -70,11 +70,12 @@ class NLUEvaluationResult:
     def sort_by_support(cls, df):
         return df.sort_values(by="support", ascending=False)
 
-    @classmethod
-    def create_html_table(cls, df: pd.DataFrame, columns=None):
+    def create_html_table(self, df: pd.DataFrame, columns=None):
         if not columns:
             columns = df.columns
-        html_table = df[columns].to_html()
+        df_for_table = df[columns]
+        df_for_table.columns.set_names([None,None], inplace=True)
+        html_table = df_for_table.to_html(na_rep="N/A")
         return html_table
 
 
@@ -229,8 +230,8 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         diff_df.rename(lambda col: f"({col} - {result_set_name_for_base_of_comparison})", axis=1, level=1, inplace=True)
         return diff_df
 
-    def show_labels_with_changes(self):
-        diff_df = self.get_diff_df()
+    def show_labels_with_changes(self, result_set_name_for_base_of_comparison=None, metrics_to_diff=None):
+        diff_df = self.get_diff_df(result_set_name_for_base_of_comparison, metrics_to_diff)
         rows_with_changes = (diff_df != 0).any(axis=1)
         df = self.df.loc[rows_with_changes]
         diff_df_selected = diff_df.loc[rows_with_changes]
@@ -240,17 +241,45 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
 
 def compare_and_format_results(result_dirs, outfile):
     intent_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/intent_report.json", "intent") for result_dir in result_dirs]
-    combined_intent_results = CombinedNLUEvaluationResults("Intent Evaluation Comparison", intent_result_sets, "intent")
+    combined_intent_results = CombinedNLUEvaluationResults("Intent Prediction Evaluation", intent_result_sets, "intent")
     combined_intent_results.write_combined_json_report("combined_intent_report.json")
 
-    intent_result_changes = combined_intent_results.show_labels_with_changes()
+    metrics_to_diff = ["support", "f1-score"]
+    intent_result_changes = combined_intent_results.show_labels_with_changes(metrics_to_diff=metrics_to_diff)
     intent_result_changes = combined_intent_results.sort_by_support(intent_result_changes)
     metrics_to_display=["support", "f1-score","confused_with"]
-    table = NLUEvaluationResult.create_html_table(intent_result_changes, columns=metrics_to_display)
+    intent_table = combined_intent_results.create_html_table(intent_result_changes, columns=metrics_to_display)
+
+    entity_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/DIETClassifier_report.json", "entity") for result_dir in result_dirs]
+    combined_entity_results = CombinedNLUEvaluationResults("Entity Extraction Evaluation", entity_result_sets, "entity")
+    combined_entity_results.write_combined_json_report("combined_entity_report.json")
+
+    entity_result_changes = combined_entity_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
+    entity_result_changes = combined_entity_results.sort_by_support(entity_result_changes)
+    metrics_to_display=["support", "f1-score","precision", "recall"]
+    entity_table = combined_entity_results.create_html_table(entity_result_changes, columns=metrics_to_display)
+
+    response_selection_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/response_selection_report.json", "response_selection") for result_dir in result_dirs]
+    combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Evaluation", response_selection_result_sets, "response_selection")
+    combined_response_selection_results.write_combined_json_report("combined_response_selection_report.json")
+
+    response_selection_result_changes = combined_response_selection_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
+    response_selection_result_changes = combined_response_selection_results.sort_by_support(response_selection_result_changes)
+    metrics_to_display=["support", "f1-score","precision", "recall"]
+    response_selection_table = combined_response_selection_results.create_html_table(response_selection_result_changes, columns=metrics_to_display)
 
     with open(outfile, "w+") as fh:
-        fh.write(table)
-
+        fh.write("<head>"
+                "<title>NLU Cross-Validation results, Compared with last stable results, Including only items with changes across result sets</title>"
+                "</head>")
+        fh.write(f"<h1>{combined_intent_results.name}</h1>")
+        fh.write(intent_table)
+        fh.write("\n")
+        fh.write(f"<h1>{combined_entity_results.name}</h1>")
+        fh.write(entity_table)
+        fh.write("\n")
+        fh.write(f"<h1>{combined_response_selection_results.name}</h1>")
+        fh.write(response_selection_table)
 
 def _create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Compare two sets of NLU evaluation results and format them as an HTML table")
