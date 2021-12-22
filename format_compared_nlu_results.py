@@ -229,7 +229,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
             return x-base_result
 
 
-        diff_df = self.df[metrics_to_diff].apply(diff_from_base, result_type="expand")
+        diff_df = self.df[metrics_to_diff].apply(diff_from_base, result_type="expand",axis=0)
         diff_df.drop(columns=base_result_set_name, level=1, inplace=True)
         diff_df = self.drop_non_numeric_metrics(diff_df)
         diff_df.rename(lambda col: f"({col} - {base_result_set_name})", axis=1, level=1, inplace=True)
