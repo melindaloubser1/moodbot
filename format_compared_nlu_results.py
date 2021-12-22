@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional
 import logging
+import os
 import json
 import pandas as pd
 import argparse
@@ -240,6 +241,11 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
 
 
 def compare_and_format_results(result_dirs, outfile):
+    with open(outfile, "w+") as fh:
+        fh.write("<head>"
+                "<title>NLU Cross-Validation results, Compared with last stable results, Including only items with changes across result sets</title>"
+                "</head>\n")
+
     intent_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/intent_report.json", "intent") for result_dir in result_dirs]
     combined_intent_results = CombinedNLUEvaluationResults("Intent Prediction Evaluation", intent_result_sets, "intent")
     combined_intent_results.write_combined_json_report("combined_intent_report.json")
@@ -249,37 +255,38 @@ def compare_and_format_results(result_dirs, outfile):
     intent_result_changes = combined_intent_results.sort_by_support(intent_result_changes)
     metrics_to_display=["support", "f1-score","confused_with"]
     intent_table = combined_intent_results.create_html_table(intent_result_changes, columns=metrics_to_display)
-
-    entity_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/DIETClassifier_report.json", "entity") for result_dir in result_dirs]
-    combined_entity_results = CombinedNLUEvaluationResults("Entity Extraction Evaluation", entity_result_sets, "entity")
-    combined_entity_results.write_combined_json_report("combined_entity_report.json")
-
-    entity_result_changes = combined_entity_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
-    entity_result_changes = combined_entity_results.sort_by_support(entity_result_changes)
-    metrics_to_display=["support", "f1-score","precision", "recall"]
-    entity_table = combined_entity_results.create_html_table(entity_result_changes, columns=metrics_to_display)
-
-    response_selection_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/response_selection_report.json", "response_selection") for result_dir in result_dirs]
-    combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Evaluation", response_selection_result_sets, "response_selection")
-    combined_response_selection_results.write_combined_json_report("combined_response_selection_report.json")
-
-    response_selection_result_changes = combined_response_selection_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
-    response_selection_result_changes = combined_response_selection_results.sort_by_support(response_selection_result_changes)
-    metrics_to_display=["support", "f1-score","precision", "recall"]
-    response_selection_table = combined_response_selection_results.create_html_table(response_selection_result_changes, columns=metrics_to_display)
-
-    with open(outfile, "w+") as fh:
-        fh.write("<head>"
-                "<title>NLU Cross-Validation results, Compared with last stable results, Including only items with changes across result sets</title>"
-                "</head>")
+    with open(outfile, "a") as fh:
         fh.write(f"<h1>{combined_intent_results.name}</h1>")
         fh.write(intent_table)
         fh.write("\n")
-        fh.write(f"<h1>{combined_entity_results.name}</h1>")
-        fh.write(entity_table)
-        fh.write("\n")
-        fh.write(f"<h1>{combined_response_selection_results.name}</h1>")
-        fh.write(response_selection_table)
+
+    if os.path.exists(os.path.join(result_dirs[0], "DIETClassifier_report.json")):
+        entity_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/DIETClassifier_report.json", "entity") for result_dir in result_dirs]
+        combined_entity_results = CombinedNLUEvaluationResults("Entity Extraction Evaluation", entity_result_sets, "entity")
+        combined_entity_results.write_combined_json_report("combined_entity_report.json")
+
+        entity_result_changes = combined_entity_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
+        entity_result_changes = combined_entity_results.sort_by_support(entity_result_changes)
+        metrics_to_display=["support", "f1-score","precision", "recall"]
+        entity_table = combined_entity_results.create_html_table(entity_result_changes, columns=metrics_to_display)
+        with open(outfile, "a") as fh:
+            fh.write(f"<h1>{combined_entity_results.name}</h1>")
+            fh.write(entity_table)
+            fh.write("\n")
+
+    if os.path.exists(os.path.join(result_dirs[0], "response_selection_report.json")):
+        response_selection_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/response_selection_report.json", "response_selection") for result_dir in result_dirs]
+        combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Evaluation", response_selection_result_sets, "response_selection")
+        combined_response_selection_results.write_combined_json_report("combined_response_selection_report.json")
+
+        response_selection_result_changes = combined_response_selection_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
+        response_selection_result_changes = combined_response_selection_results.sort_by_support(response_selection_result_changes)
+        metrics_to_display=["support", "f1-score","precision", "recall"]
+        response_selection_table = combined_response_selection_results.create_html_table(response_selection_result_changes, columns=metrics_to_display)
+
+        with open(outfile, "a") as fh:
+            fh.write(f"<h1>{combined_response_selection_results.name}</h1>")
+            fh.write(response_selection_table)
 
 def _create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Compare two sets of NLU evaluation results and format them as an HTML table")
