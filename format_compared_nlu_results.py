@@ -233,11 +233,11 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         diff_df.drop(columns=base_result_set_name, level=1, inplace=True)
         diff_df = self.drop_non_numeric_metrics(diff_df)
         diff_df.rename(lambda col: f"({col} - {base_result_set_name})", axis=1, level=1, inplace=True)
-        return diff_df
+        return pd.DataFrame(diff_df)
 
     def show_labels_with_changes(self, base_result_set_name=None, metrics_to_diff=None):
         diff_df = self.get_diff_df(base_result_set_name, metrics_to_diff)
-        rows_with_changes = (diff_df != 0).any(axis=1)
+        rows_with_changes = diff_df.any(axis=1)
         df = self.df.loc[rows_with_changes]
         diff_df_selected = diff_df.loc[rows_with_changes]
         combined_diff_df = pd.concat([df, diff_df_selected], axis=1)
