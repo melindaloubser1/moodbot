@@ -36,15 +36,6 @@ nlu:
     - of course
     - that sounds good
     - correct
-- intent: deny
-  examples: |
-    - no
-    - n
-    - never
-    - I don't think so
-    - don't like that
-    - no way
-    - not really
 - intent: mood_great
   examples: |
     - perfect
@@ -56,11 +47,7 @@ nlu:
     - I am great
     - I am amazing
     - I am going to save the world
-    - super stoked
-    - extremely good
-    - so so perfect
-    - so good
-    - so perfect
+
 - intent: mood_unhappy
   examples: |
     - my day was horrible

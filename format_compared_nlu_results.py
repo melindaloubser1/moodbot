@@ -210,9 +210,9 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         combined_results.result_sets = combined_results.load_result_sets_from_df()
         return combined_results
 
-    def get_diff_df(self, result_set_name_for_base_of_comparison=None, metrics_to_diff=None):
-        if not result_set_name_for_base_of_comparison:
-            result_set_name_for_base_of_comparison = self.result_sets[0].name
+    def get_diff_df(self, base_result_set_name=None, metrics_to_diff=None):
+        if not base_result_set_name:
+            base_result_set_name = self.result_sets[0].name
         if not metrics_to_diff:
             metrics_to_diff = list(set(self.df.columns.get_level_values("metric")))
 
@@ -220,19 +220,23 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
             metric = x.name[0]
             if metric == "confused_with":
                 return
+            try:
+                base_result = self.df[(metric, base_result_set_name)]
+            except KeyError:
+                return
             if metric == "support":
-                return x.fillna(0) - self.df[(metric, result_set_name_for_base_of_comparison)].fillna(0)
-            return x-self.df[(metric, result_set_name_for_base_of_comparison)]
+                return x.fillna(0) - base_result.fillna(0)
+            return x-base_result
 
 
         diff_df = self.df[metrics_to_diff].apply(diff_from_base)
-        diff_df.drop(columns=result_set_name_for_base_of_comparison, level=1, inplace=True)
+        diff_df.drop(columns=base_result_set_name, level=1, inplace=True)
         diff_df = self.drop_non_numeric_metrics(diff_df)
-        diff_df.rename(lambda col: f"({col} - {result_set_name_for_base_of_comparison})", axis=1, level=1, inplace=True)
+        diff_df.rename(lambda col: f"({col} - {base_result_set_name})", axis=1, level=1, inplace=True)
         return diff_df
 
-    def show_labels_with_changes(self, result_set_name_for_base_of_comparison=None, metrics_to_diff=None):
-        diff_df = self.get_diff_df(result_set_name_for_base_of_comparison, metrics_to_diff)
+    def show_labels_with_changes(self, base_result_set_name=None, metrics_to_diff=None):
+        diff_df = self.get_diff_df(base_result_set_name, metrics_to_diff)
         rows_with_changes = (diff_df != 0).any(axis=1)
         df = self.df.loc[rows_with_changes]
         diff_df_selected = diff_df.loc[rows_with_changes]
@@ -242,12 +246,11 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
 
 def compare_and_format_results(result_dirs, outfile):
     with open(outfile, "w+") as fh:
-        fh.write("<head>"
-                "<title>NLU Cross-Validation results, Compared with last stable results, Including only items with changes across result sets</title>"
-                "</head>\n")
+        fh.write("<h1>NLU Cross-Validation Results</h1>")
+        fh.write("<body>These tables display only items with changes in at least one metric compared to the last stable result.</body>")
 
     intent_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/intent_report.json", "intent") for result_dir in result_dirs]
-    combined_intent_results = CombinedNLUEvaluationResults("Intent Prediction Evaluation", intent_result_sets, "intent")
+    combined_intent_results = CombinedNLUEvaluationResults("Intent Prediction Results", intent_result_sets, "intent")
     combined_intent_results.write_combined_json_report("combined_intent_report.json")
 
     metrics_to_diff = ["support", "f1-score"]
@@ -256,13 +259,13 @@ def compare_and_format_results(result_dirs, outfile):
     metrics_to_display=["support", "f1-score","confused_with"]
     intent_table = combined_intent_results.create_html_table(intent_result_changes, columns=metrics_to_display)
     with open(outfile, "a") as fh:
-        fh.write(f"<h1>{combined_intent_results.name}</h1>")
+        fh.write(f"<h2>{combined_intent_results.name}</h2>")
         fh.write(intent_table)
         fh.write("\n")
 
     if os.path.exists(os.path.join(result_dirs[0], "DIETClassifier_report.json")):
         entity_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/DIETClassifier_report.json", "entity") for result_dir in result_dirs]
-        combined_entity_results = CombinedNLUEvaluationResults("Entity Extraction Evaluation", entity_result_sets, "entity")
+        combined_entity_results = CombinedNLUEvaluationResults("Entity Extraction Results", entity_result_sets, "entity")
         combined_entity_results.write_combined_json_report("combined_entity_report.json")
 
         entity_result_changes = combined_entity_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
@@ -270,13 +273,13 @@ def compare_and_format_results(result_dirs, outfile):
         metrics_to_display=["support", "f1-score","precision", "recall"]
         entity_table = combined_entity_results.create_html_table(entity_result_changes, columns=metrics_to_display)
         with open(outfile, "a") as fh:
-            fh.write(f"<h1>{combined_entity_results.name}</h1>")
+            fh.write(f"<h2>{combined_entity_results.name}</h2>")
             fh.write(entity_table)
             fh.write("\n")
 
     if os.path.exists(os.path.join(result_dirs[0], "response_selection_report.json")):
         response_selection_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/response_selection_report.json", "response_selection") for result_dir in result_dirs]
-        combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Evaluation", response_selection_result_sets, "response_selection")
+        combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Results", response_selection_result_sets, "response_selection")
         combined_response_selection_results.write_combined_json_report("combined_response_selection_report.json")
 
         response_selection_result_changes = combined_response_selection_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
@@ -285,7 +288,7 @@ def compare_and_format_results(result_dirs, outfile):
         response_selection_table = combined_response_selection_results.create_html_table(response_selection_result_changes, columns=metrics_to_display)
 
         with open(outfile, "a") as fh:
-            fh.write(f"<h1>{combined_response_selection_results.name}</h1>")
+            fh.write(f"<h2>{combined_response_selection_results.name}</h2>")
             fh.write(response_selection_table)
 
 def _create_argument_parser() -> argparse.ArgumentParser:
