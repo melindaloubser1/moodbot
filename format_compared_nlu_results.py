@@ -7,7 +7,9 @@ import argparse
 
 logger = logging.getLogger(__file__)
 
-
+INTENT_REPORT_FILENAME = "intent_report"
+ENTITY_REPORT_FILENAME = "DIETClassifier_report"
+RESPONSE_SELECTION_REPORT_FILENAME = "response_selection_report"
 
 class NLUEvaluationResult:
     def __init__(self, name, report_filepath="", label_name=""):
@@ -250,48 +252,50 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         combined_diff_df = pd.concat([df, diff_df_selected], axis=1)
         return combined_diff_df
 
-
 def compare_and_format_results(result_dirs, outfile):
     with open(outfile, "w+") as fh:
         fh.write("<h1>NLU Cross-Validation Results</h1>")
         fh.write("<body>These tables display only items with changes in at least one metric compared to the last stable result.</body>")
 
-    intent_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/intent_report.json", "intent") for ix, result_dir in enumerate(result_dirs)]
-    combined_intent_results = CombinedNLUEvaluationResults("Intent Prediction Results", intent_result_sets, "intent")
-    combined_intent_results.write_combined_json_report("combined_intent_report.json")
+    if any([os.path.exists(os.path.join(result_dir, "intent_report.json")) for result_dir in result_dirs]):
+        intent_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/intent_report.json", "intent") for ix, result_dir in enumerate(result_dirs)]
+        combined_intent_results = CombinedNLUEvaluationResults("Intent Prediction Results", intent_result_sets, "intent")
+        combined_intent_results.write_combined_json_report("combined_intent_report.json")
 
-    metrics_to_diff = ["support", "f1-score"]
-    intent_result_changes = combined_intent_results.find_labels_with_changes(metrics_to_diff=metrics_to_diff)
-    intent_result_changes = combined_intent_results.sort_by_support(intent_result_changes)
-    metrics_to_display=["support", "f1-score","confused_with"]
-    intent_table = combined_intent_results.create_html_table(intent_result_changes, columns=metrics_to_display)
-    with open(outfile, "a") as fh:
-        fh.write(f"<h2>{combined_intent_results.name}</h2>")
-        fh.write(intent_table)
-        fh.write("\n")
+        metrics_to_diff = ["support", "f1-score"]
+        intent_result_changes = combined_intent_results.find_labels_with_changes(metrics_to_diff=metrics_to_diff)
+        intent_result_changes = combined_intent_results.sort_by_support(intent_result_changes)
+        metrics_to_display=["support", "f1-score","confused_with"]
+        intent_table = combined_intent_results.create_html_table(intent_result_changes, columns=metrics_to_display)
+        with open(outfile, "a") as fh:
+            fh.write(f"<h2>{combined_intent_results.name}</h2>")
+            fh.write(intent_table)
+            fh.write("\n")
 
-    if os.path.exists(os.path.join(result_dirs[0], "DIETClassifier_report.json")):
+    if any([os.path.exists(os.path.join(result_dir, "DIETClassifier_report.json")) for result_dir in result_dirs]):
         entity_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/DIETClassifier_report.json", "entity") for ix, result_dir in enumerate(result_dirs)]
         combined_entity_results = CombinedNLUEvaluationResults("Entity Extraction Results", entity_result_sets, "entity")
         combined_entity_results.write_combined_json_report("combined_entity_report.json")
 
-        entity_result_changes = combined_entity_results.find_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
+        metrics_to_diff = ["support", "f1-score"]
+        entity_result_changes = combined_entity_results.find_labels_with_changes(metrics_to_diff=metrics_to_diff)
         entity_result_changes = combined_entity_results.sort_by_support(entity_result_changes)
-        metrics_to_display=["support", "f1-score","precision", "recall"]
+        metrics_to_display=["support", "f1-score"]
         entity_table = combined_entity_results.create_html_table(entity_result_changes, columns=metrics_to_display)
         with open(outfile, "a") as fh:
             fh.write(f"<h2>{combined_entity_results.name}</h2>")
             fh.write(entity_table)
             fh.write("\n")
 
-    if os.path.exists(os.path.join(result_dirs[0], "response_selection_report.json")):
+    if any([os.path.exists(os.path.join(result_dir, "response_selection_report.json")) for result_dir in result_dirs]):
         response_selection_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/response_selection_report.json", "retrieval_intent") for ix, result_dir in enumerate(result_dirs)]
         combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Results", response_selection_result_sets, "retrieval_intent")
         combined_response_selection_results.write_combined_json_report("combined_response_selection_report.json")
 
-        response_selection_result_changes = combined_response_selection_results.find_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
+        metrics_to_diff = ["support", "f1-score"]
+        response_selection_result_changes = combined_response_selection_results.find_labels_with_changes(metrics_to_diff=metrics_to_diff)
         response_selection_result_changes = combined_response_selection_results.sort_by_support(response_selection_result_changes)
-        metrics_to_display=["support", "f1-score","precision", "recall"]
+        metrics_to_display=["support", "f1-score"]
         response_selection_table = combined_response_selection_results.create_html_table(response_selection_result_changes, columns=metrics_to_display)
 
         with open(outfile, "a") as fh:
