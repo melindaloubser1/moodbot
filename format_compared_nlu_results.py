@@ -8,6 +8,7 @@ import argparse
 logger = logging.getLogger(__file__)
 
 
+
 class NLUEvaluationResult:
     def __init__(self, name, report_filepath="", label_name=""):
         self.report_filepath = report_filepath
@@ -219,26 +220,30 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         def diff_from_base(x):
             metric = x.name[0]
             if metric == "confused_with":
-                return
+                difference = pd.Series(None, index = x.index)
+                return difference
             try:
                 base_result = self.df[(metric, base_result_set_name)]
             except KeyError:
-                return
+                difference = pd.Series(None, index = x.index)
+                return difference
             if metric == "support":
-                return x.fillna(0) - base_result.fillna(0)
-            return x-base_result
+                difference = x.fillna(0) - base_result.fillna(0)
+            else:
+                difference = x-base_result
+            return difference
 
 
-        diff_df = self.df[metrics_to_diff].apply(diff_from_base, result_type="expand",axis=0)
+        diff_df = self.df[metrics_to_diff].apply(diff_from_base)
         diff_df.drop(columns=base_result_set_name, level=1, inplace=True)
         diff_df = self.drop_non_numeric_metrics(diff_df)
         diff_df.rename(lambda col: f"({col} - {base_result_set_name})", axis=1, level=1, inplace=True)
         return pd.DataFrame(diff_df)
 
-    def show_labels_with_changes(self, base_result_set_name=None, metrics_to_diff=None):
+    def find_labels_with_changes(self, base_result_set_name=None, metrics_to_diff=None):
         diff_df = self.get_diff_df(base_result_set_name, metrics_to_diff)
         logger.error(diff_df)
-        rows_with_changes = diff_df.any(axis=1)
+        rows_with_changes = diff_df.apply(lambda x: x.any(), axis = 1)
         logger.error(rows_with_changes)
         df = self.df.loc[rows_with_changes]
         diff_df_selected = diff_df.loc[rows_with_changes]
@@ -251,12 +256,12 @@ def compare_and_format_results(result_dirs, outfile):
         fh.write("<h1>NLU Cross-Validation Results</h1>")
         fh.write("<body>These tables display only items with changes in at least one metric compared to the last stable result.</body>")
 
-    intent_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/intent_report.json", "intent") for result_dir in result_dirs]
+    intent_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/intent_report.json", "intent") for ix, result_dir in enumerate(result_dirs)]
     combined_intent_results = CombinedNLUEvaluationResults("Intent Prediction Results", intent_result_sets, "intent")
     combined_intent_results.write_combined_json_report("combined_intent_report.json")
 
     metrics_to_diff = ["support", "f1-score"]
-    intent_result_changes = combined_intent_results.show_labels_with_changes(metrics_to_diff=metrics_to_diff)
+    intent_result_changes = combined_intent_results.find_labels_with_changes(metrics_to_diff=metrics_to_diff)
     intent_result_changes = combined_intent_results.sort_by_support(intent_result_changes)
     metrics_to_display=["support", "f1-score","confused_with"]
     intent_table = combined_intent_results.create_html_table(intent_result_changes, columns=metrics_to_display)
@@ -266,11 +271,11 @@ def compare_and_format_results(result_dirs, outfile):
         fh.write("\n")
 
     if os.path.exists(os.path.join(result_dirs[0], "DIETClassifier_report.json")):
-        entity_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/DIETClassifier_report.json", "entity") for result_dir in result_dirs]
+        entity_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/DIETClassifier_report.json", "entity") for ix, result_dir in enumerate(result_dirs)]
         combined_entity_results = CombinedNLUEvaluationResults("Entity Extraction Results", entity_result_sets, "entity")
         combined_entity_results.write_combined_json_report("combined_entity_report.json")
 
-        entity_result_changes = combined_entity_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
+        entity_result_changes = combined_entity_results.find_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
         entity_result_changes = combined_entity_results.sort_by_support(entity_result_changes)
         metrics_to_display=["support", "f1-score","precision", "recall"]
         entity_table = combined_entity_results.create_html_table(entity_result_changes, columns=metrics_to_display)
@@ -280,11 +285,11 @@ def compare_and_format_results(result_dirs, outfile):
             fh.write("\n")
 
     if os.path.exists(os.path.join(result_dirs[0], "response_selection_report.json")):
-        response_selection_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/response_selection_report.json", "retrieval_intent") for result_dir in result_dirs]
+        response_selection_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/response_selection_report.json", "retrieval_intent") for ix, result_dir in enumerate(result_dirs)]
         combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Results", response_selection_result_sets, "retrieval_intent")
         combined_response_selection_results.write_combined_json_report("combined_response_selection_report.json")
 
-        response_selection_result_changes = combined_response_selection_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
+        response_selection_result_changes = combined_response_selection_results.find_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
         response_selection_result_changes = combined_response_selection_results.sort_by_support(response_selection_result_changes)
         metrics_to_display=["support", "f1-score","precision", "recall"]
         response_selection_table = combined_response_selection_results.create_html_table(response_selection_result_changes, columns=metrics_to_display)
