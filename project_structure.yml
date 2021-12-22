@@ -1,9 +1,9 @@
 nlu_data_path: data/nlu.yml
 default_target_files:
   intents: data/nlu.yml
-  synonyms: data/nlu.yml
-  regexes: data/nlu.yml
-  lookups: data/nlu.yml
+  synonyms: data/synonyms.yml
+  regexes: data/regexes.yml
+  lookups: data/lookups.yml
 target_files:
   intents:
     greet: data/nlu.yml
