@@ -237,7 +237,9 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
 
     def show_labels_with_changes(self, base_result_set_name=None, metrics_to_diff=None):
         diff_df = self.get_diff_df(base_result_set_name, metrics_to_diff)
+        logger.error(diff_df)
         rows_with_changes = diff_df.any(axis=1)
+        logger.error(rows_with_changes)
         df = self.df.loc[rows_with_changes]
         diff_df_selected = diff_df.loc[rows_with_changes]
         combined_diff_df = pd.concat([df, diff_df_selected], axis=1)
