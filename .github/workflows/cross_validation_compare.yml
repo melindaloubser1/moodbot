@@ -1,0 +1,76 @@
+on:
+  pull_request:
+    paths:
+      - 'data/nlu/*'
+      - 'config.yml'
+      - 'requirements-rasa.txt'
+      - '.github/workflows/cross_validation_compare.yml'
+
+env:
+  GCLOUD_VERSION: "297.0.1"
+
+jobs:
+  run_cross_validation:
+    runs-on: ubuntu-latest
+    name: Cross-validate
+    steps:
+    - name: Cancel Previous Runs
+      uses: styfle/cancel-workflow-action@0.8.0
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Checkout pull request HEAD commit instead of merge commit
+      uses: actions/checkout@v2
+      if: github.event_name == 'pull_request'
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Checkout git repository
+      uses: actions/checkout@v2
+      if: github.event_name != 'pull_request'
+
+    - name: Setup python
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.8'
+    - name: Authenticate with gcloud 🎫
+      uses: google-github-actions/setup-gcloud@daadedc81d5f9d3c06d2c92f49202a3cc2b919ba 
+      with:
+        version: "${{ env.GCLOUD_VERSION }}"
+        service_account_email: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_NAME }}
+        service_account_key: ${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}
+    - name: Download previous results
+      id: prev_results
+      run: |
+        TARGET_BRANCH=${{ github.event.pull_request.base.ref }}
+        LAST_RESULTS_ON_TARGET_BRANCH_URL=$(gsutil ls ${{ secrets.STORAGE_BUCKET_URL }} | grep $TARGET_BRANCH | sort -k2 | tail -n1)
+        echo $LAST_RESULTS_ON_TARGET_BRANCH_URL
+        LAST_RESULTS_ON_TARGET_BRANCH_PATH=$(basename $LAST_RESULTS_ON_TARGET_BRANCH_URL)
+        gsutil -m cp -r ${LAST_RESULTS_ON_TARGET_BRANCH_URL} .
+        echo ::set-output name=LAST_RESULTS_ON_TARGET_BRANCH_PATH::"$LAST_RESULTS_ON_TARGET_BRANCH_PATH"
+    - name: Install dependencies
+      run: |
+        pip install -r requirements-rasa.txt
+        pip install -r requirements-format-results.txt
+    - name: Run cross-validation
+      run: |
+        rasa test nlu --cross-validation -f 2
+
+    - name: Run cross-val comparison
+      run: |
+        python format_compared_nlu_results.py \
+             --result_dirs ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }} results \
+             --outfile formatted_compared_results.html
+
+    - name: Post cross-val comparison to PR
+      uses: amn41/comment-on-pr@comment-file-contents
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        msg: formatted_compared_results.html
+
+    - name: Upload new results to storage bucket
+      run: |
+        NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
+        echo $NAME
+        gsutil -m cp -r results/* ${{ secrets.STORAGE_BUCKET_URL }}/"${NAME}"
