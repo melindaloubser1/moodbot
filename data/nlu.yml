@@ -47,7 +47,6 @@ nlu:
     - I am great
     - I am amazing
     - I am going to save the world
-
 - intent: mood_unhappy
   examples: |
     - my day was horrible
