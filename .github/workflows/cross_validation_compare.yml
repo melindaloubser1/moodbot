@@ -56,11 +56,6 @@ jobs:
     - name: Run cross-validation
       run: |
         rasa test nlu --cross-validation -f 2
-    - name: Upload new results to storage bucket
-      run: |
-        NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
-        echo $NAME
-        gsutil -m cp -r results ${{ secrets.STORAGE_BUCKET_URL }}/"${NAME}"/
 
     - name: Run cross-val comparison
       run: |
@@ -74,3 +69,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         msg: formatted_compared_results.html
+
+    - name: Upload new results to storage bucket
+      run: |
+        NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
+        echo $NAME
+        gsutil -m cp -r results/* ${{ secrets.STORAGE_BUCKET_URL }}/"${NAME}"
