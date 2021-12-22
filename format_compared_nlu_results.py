@@ -278,8 +278,8 @@ def compare_and_format_results(result_dirs, outfile):
             fh.write("\n")
 
     if os.path.exists(os.path.join(result_dirs[0], "response_selection_report.json")):
-        response_selection_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/response_selection_report.json", "response_selection") for result_dir in result_dirs]
-        combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Results", response_selection_result_sets, "response_selection")
+        response_selection_result_sets = [NLUEvaluationResult(result_dir, f"{result_dir}/response_selection_report.json", "retrieval_intent") for result_dir in result_dirs]
+        combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Results", response_selection_result_sets, "retrieval_intent")
         combined_response_selection_results.write_combined_json_report("combined_response_selection_report.json")
 
         response_selection_result_changes = combined_response_selection_results.show_labels_with_changes(metrics_to_diff = ["support", "f1-score", "precision", "recall"])
