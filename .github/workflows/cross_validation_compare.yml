@@ -50,7 +50,10 @@ jobs:
         gsutil -m cp -r results ${{ secrets.STORAGE_BUCKET_URL }}/"${NAME}"/
 
     - name: Run cross-val comparison
-      run: python format_compared_nlu_results.py --result_dirs results ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }} --outfile formatted_compared_results.html
+      run: |
+        python format_compared_nlu_results.py \
+             --result_dirs ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }} results \
+             --outfile formatted_compared_results.html
 
     - name: Post cross-val comparison to PR
       uses: amn41/comment-on-pr@comment-file-contents
