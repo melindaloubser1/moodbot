@@ -71,26 +71,24 @@ class NLUEvaluationResult:
                 pass
         return df
 
-    def get_sorted_labels(self, sort_by_metric: Text):
-        labels = self.df.sort_values(by=sort_by_metric, ascending=False).index.tolist()
+    def sort_by_metric(self, sort_by_metric: Text):
+        return self.df.sort_values(by=sort_by_metric, ascending=False)
+
+    def get_sorted_labels(self, sort_by_metric: Text, labels: List[Text]=None):
+        sorted_labels = self.sort_by_metric(sort_by_metric=sort_by_metric).index.tolist()
         avg_labels = [
                         "macro avg",
                         "micro avg",
                         "weighted avg"
                     ]
-        labels_avg_first = [label for label in self.df.index.tolist() if label in avg_labels] + [label for label in labels if label not in avg_labels]
+        labels_avg_first = [label for label in self.df.index.tolist() if label in avg_labels] + [label for label in sorted_labels if label not in avg_labels and (labels is None or label in labels)]
         return labels_avg_first
 
-
     def create_html_table(self, columns=None, labels=None, sort_by_metric="support"):
-        ordered_labels = self.get_sorted_labels(sort_by_metric=sort_by_metric)
-        if labels is None:
-            selected_labels = ordered_labels
-        else:
-            selected_labels = [label for label in ordered_labels if label in labels]
+        labels = self.get_sorted_labels(sort_by_metric=sort_by_metric, labels=labels)
         if not columns:
             columns = self.df.columns
-        df_for_table = self.df.loc[selected_labels,columns]
+        df_for_table = self.df.loc[labels,columns]
         df_for_table.columns.set_names([None, None], inplace=True)
         df_for_table.index.set_names([None], inplace=True)
         html_table = df_for_table.to_html(na_rep="N/A")
@@ -164,17 +162,10 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
                 pass
         return df
 
-    def get_sorted_labels(self, sort_by_metric: Text):
-        labels = self.df.sort_values(
-            by=[(sort_by_metric, self.df[sort_by_metric].iloc[:, 0].name)], ascending=False
-        ).index.tolist()
-        avg_labels = [
-                        "macro avg",
-                        "micro avg",
-                        "weighted avg"
-                    ]
-        labels_avg_first = [label for label in avg_labels if label in labels] + [label for label in labels if label not in avg_labels]
-        return labels_avg_first
+    def sort_by_metric(self, sort_by_metric: Text):
+        return self.df.sort_values(
+                by=[(sort_by_metric, self.df[sort_by_metric].iloc[:, 0].name)], ascending=False
+            )
 
     @classmethod
     def order_metrics(cls, df, metrics_order=None):
@@ -336,14 +327,20 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--html_outfile",
-        help=("File to which to write HTML table. File will be overwritten unless --append_to_outfile is specified."),
+        help=("File to which to write HTML table. File will be overwritten unless --append is specified."),
         default="formatted_compared_results.html",
     )
 
     parser.add_argument(
-        "--append_to_outfile",
-        help=("Append to html_outfile instead of overwriting it. "),
+        "--append",
+        help=("Append to html_outfile instead of overwriting it."),
         action='store_true'
+    )
+
+    parser.add_argument(
+        "--json_outfile",
+        help=("File to which to write combined json report."),
+        default="combined_results.json",
     )
 
     parser.add_argument(
@@ -406,13 +403,13 @@ def main():
         table = combined_results.create_html_table(columns=args.metrics_to_display, sort_by_metric=args.sort_by_metric)
 
     mode = "w+"
-    if args.append_to_outfile:
+    if args.append:
         mode = "a+"
     with open(args.html_outfile, mode) as fh:
         fh.write(f"<h1>{args.title}</h1>")
         if args.display_only_diff:
             fh.write(
-                f"<body>Only the {args.label_name}(s) that show differences in at least one of the following metrics: {args.metrics_to_diff} are displayed.</body>"
+                f"<body>Only averages and the {args.label_name}(s) that show differences in at least one of the following metrics: {args.metrics_to_diff} are displayed.</body>"
             )
         fh.write(table)
 
