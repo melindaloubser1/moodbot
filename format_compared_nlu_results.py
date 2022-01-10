@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Text, NamedTuple
 import logging
 import os
 import json
@@ -7,13 +7,14 @@ import argparse
 
 logger = logging.getLogger(__file__)
 
-INTENT_REPORT_FILENAME = "intent_report"
-ENTITY_REPORT_FILENAME = "DIETClassifier_report"
-RESPONSE_SELECTION_REPORT_FILENAME = "response_selection_report"
+class NamedResultFile(NamedTuple):
+    filepath: Text
+    name: Text
+
 
 class NLUEvaluationResult:
-    def __init__(self, name, report_filepath="", label_name=""):
-        self.report_filepath = report_filepath
+    def __init__(self, name: Text="Evaluation Result", label_name: Text="label", json_report_filepath: Optional[Text]=None):
+        self.json_report_filepath = json_report_filepath
         self.name = name
         self.label_name = label_name
         self.report = self.load_report_from_file()
@@ -21,7 +22,7 @@ class NLUEvaluationResult:
 
     def load_report_from_file(self) -> Dict:
         try:
-            with open(self.report_filepath, "r") as f:
+            with open(self.json_report_filepath, "r") as f:
                 report = json.loads(f.read())
         except FileNotFoundError:
             report = {}
@@ -70,32 +71,43 @@ class NLUEvaluationResult:
                 pass
         return df
 
-    @classmethod
-    def sort_by_support(cls, df):
-        return df.sort_values(by="support", ascending=False)
+    def get_sorted_labels(self, sort_by_metric: Text):
+        labels = self.df.sort_values(by=sort_by_metric, ascending=False).index.tolist()
+        avg_labels = [
+                        "macro avg",
+                        "micro avg",
+                        "weighted avg"
+                    ]
+        labels_avg_first = [label for label in self.df.index.tolist() if label in avg_labels] + [label for label in labels if label not in avg_labels]
+        return labels_avg_first
 
-    def create_html_table(self, df: pd.DataFrame, columns=None):
+
+    def create_html_table(self, columns=None, labels=None, sort_by_metric="support"):
+        ordered_labels = self.get_sorted_labels(sort_by_metric=sort_by_metric)
+        if labels is None:
+            selected_labels = ordered_labels
+        else:
+            selected_labels = [label for label in ordered_labels if label in labels]
         if not columns:
-            columns = df.columns
-        df_for_table = df[columns]
-        df_for_table.columns.set_names([None,None], inplace=True)
+            columns = self.df.columns
+        df_for_table = self.df.loc[selected_labels,columns]
+        df_for_table.columns.set_names([None, None], inplace=True)
+        df_for_table.index.set_names([None], inplace=True)
         html_table = df_for_table.to_html(na_rep="N/A")
         return html_table
-
-
 
 
 class CombinedNLUEvaluationResults(NLUEvaluationResult):
     def __init__(
         self,
-        name,
-        result_sets_to_combine: Optional[List[NLUEvaluationResult]] = None,
-        label_name="",
+        name: Text="Combined Evaluation Results",
+        label_name="label",
+        result_sets: Optional[List[NLUEvaluationResult]] = None,
     ):
         self.name = name
-        if not result_sets_to_combine:
-            result_sets_to_combine = []
-        self.result_sets = result_sets_to_combine
+        if not result_sets:
+            result_sets = []
+        self.result_sets = result_sets
         self.label_name = label_name
         self.df = self.load_joined_df()
         self.report = self.load_joined_report()
@@ -152,12 +164,17 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
                 pass
         return df
 
-    @classmethod
-    def sort_by_support(cls, df):
-        return df.sort_values(
-            by=[("support", df["support"].iloc[:, 0].name)],
-            ascending=False
-        )
+    def get_sorted_labels(self, sort_by_metric: Text):
+        labels = self.df.sort_values(
+            by=[(sort_by_metric, self.df[sort_by_metric].iloc[:, 0].name)], ascending=False
+        ).index.tolist()
+        avg_labels = [
+                        "macro avg",
+                        "micro avg",
+                        "weighted avg"
+                    ]
+        labels_avg_first = [label for label in avg_labels if label in labels] + [label for label in labels if label not in avg_labels]
+        return labels_avg_first
 
     @classmethod
     def order_metrics(cls, df, metrics_order=None):
@@ -177,7 +194,9 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
     @classmethod
     def order_result_sets(cls, df, result_set_order=None):
         if not result_set_order:
-            result_set_order = [result.name for result in df.columns.get_level_values("result_set")]
+            result_set_order = [
+                result.name for result in df.columns.get_level_values("result_set")
+            ]
         result_set_order_dict = {v: k for k, v in enumerate(result_set_order)}
         df.sort_index(
             axis="columns",
@@ -222,102 +241,181 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         def diff_from_base(x):
             metric = x.name[0]
             if metric == "confused_with":
-                difference = pd.Series(None, index = x.index)
+                difference = pd.Series(None, index=x.index)
                 return difference
             try:
                 base_result = self.df[(metric, base_result_set_name)]
             except KeyError:
-                difference = pd.Series(None, index = x.index)
+                difference = pd.Series(None, index=x.index, dtype="float64")
                 return difference
             if metric == "support":
                 difference = x.fillna(0) - base_result.fillna(0)
             else:
-                difference = x-base_result
+                difference = x - base_result
             return difference
-
 
         diff_df = self.df[metrics_to_diff].apply(diff_from_base)
         diff_df.drop(columns=base_result_set_name, level=1, inplace=True)
         diff_df = self.drop_non_numeric_metrics(diff_df)
-        diff_df.rename(lambda col: f"({col} - {base_result_set_name})", axis=1, level=1, inplace=True)
+        diff_df.rename(
+            lambda col: f"({col} - {base_result_set_name})",
+            axis=1,
+            level=1,
+            inplace=True,
+        )
         return pd.DataFrame(diff_df)
 
     def find_labels_with_changes(self, base_result_set_name=None, metrics_to_diff=None):
         diff_df = self.get_diff_df(base_result_set_name, metrics_to_diff)
-        logger.error(diff_df)
-        rows_with_changes = diff_df.apply(lambda x: x.any(), axis = 1)
-        logger.error(rows_with_changes)
+        rows_with_changes = diff_df.apply(lambda x: x.any(), axis=1)
         df = self.df.loc[rows_with_changes]
         diff_df_selected = diff_df.loc[rows_with_changes]
         combined_diff_df = pd.concat([df, diff_df_selected], axis=1)
-        return combined_diff_df
+        return combined_diff_df.index.tolist()
 
-def compare_and_format_results(result_dirs, outfile):
-    with open(outfile, "w+") as fh:
-        fh.write("<h1>NLU Cross-Validation Results</h1>")
-        fh.write("<body>These tables display only items with changes in at least one metric compared to the last stable result.</body>")
 
-    if any([os.path.exists(os.path.join(result_dir, "intent_report.json")) for result_dir in result_dirs]):
-        intent_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/intent_report.json", "intent") for ix, result_dir in enumerate(result_dirs)]
-        combined_intent_results = CombinedNLUEvaluationResults("Intent Prediction Results", intent_result_sets, "intent")
-        combined_intent_results.write_combined_json_report("combined_intent_report.json")
+def combine_results(result_files: List[NamedResultFile], label_name: Optional[Text]="label", title="Combined NLU Evaluation Results"):
+    result_sets = [
+        NLUEvaluationResult(
+            name=result_file.name, label_name=label_name, json_report_filepath=result_file.filepath, 
+        )
+        for result_file in result_files
+    ]
+    combined_results = CombinedNLUEvaluationResults(
+        name=title, result_sets=result_sets, label_name=label_name
+    )
+    combined_results.write_combined_json_report(f"combined_{label_name}_report.json")
+    return combined_results
 
-        metrics_to_diff = ["support", "f1-score"]
-        intent_result_changes = combined_intent_results.find_labels_with_changes(metrics_to_diff=metrics_to_diff)
-        intent_result_changes = combined_intent_results.sort_by_support(intent_result_changes)
-        metrics_to_display=["support", "f1-score","confused_with"]
-        intent_table = combined_intent_results.create_html_table(intent_result_changes, columns=metrics_to_display)
-        with open(outfile, "a") as fh:
-            fh.write(f"<h2>{combined_intent_results.name}</h2>")
-            fh.write(intent_table)
-            fh.write("\n")
+def parse_var(s):
+    """
+    Parse a key, value pair, separated by '='
 
-    if any([os.path.exists(os.path.join(result_dir, "DIETClassifier_report.json")) for result_dir in result_dirs]):
-        entity_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/DIETClassifier_report.json", "entity") for ix, result_dir in enumerate(result_dirs)]
-        combined_entity_results = CombinedNLUEvaluationResults("Entity Extraction Results", entity_result_sets, "entity")
-        combined_entity_results.write_combined_json_report("combined_entity_report.json")
+    On the command line (argparse) a declaration will typically look like:
+        foo=hello
+    or
+        foo="hello world"
+    """
+    items = s.split('=')
+    key = items[0].strip()
+    if len(items) > 1:
+        value = '='.join(items[1:])
+    return (key, value)
 
-        metrics_to_diff = ["support", "f1-score"]
-        entity_result_changes = combined_entity_results.find_labels_with_changes(metrics_to_diff=metrics_to_diff)
-        entity_result_changes = combined_entity_results.sort_by_support(entity_result_changes)
-        metrics_to_display=["support", "f1-score"]
-        entity_table = combined_entity_results.create_html_table(entity_result_changes, columns=metrics_to_display)
-        with open(outfile, "a") as fh:
-            fh.write(f"<h2>{combined_entity_results.name}</h2>")
-            fh.write(entity_table)
-            fh.write("\n")
 
-    if any([os.path.exists(os.path.join(result_dir, "response_selection_report.json")) for result_dir in result_dirs]):
-        response_selection_result_sets = [NLUEvaluationResult(f"{result_dir}-{ix}", f"{result_dir}/response_selection_report.json", "retrieval_intent") for ix, result_dir in enumerate(result_dirs)]
-        combined_response_selection_results = CombinedNLUEvaluationResults("Response Selection Results", response_selection_result_sets, "retrieval_intent")
-        combined_response_selection_results.write_combined_json_report("combined_response_selection_report.json")
+def parse_vars(items):
+    """
+    Parse a series of key-value pairs and return a dictionary
+    """
+    d = {}
 
-        metrics_to_diff = ["support", "f1-score"]
-        response_selection_result_changes = combined_response_selection_results.find_labels_with_changes(metrics_to_diff=metrics_to_diff)
-        response_selection_result_changes = combined_response_selection_results.sort_by_support(response_selection_result_changes)
-        metrics_to_display=["support", "f1-score"]
-        response_selection_table = combined_response_selection_results.create_html_table(response_selection_result_changes, columns=metrics_to_display)
+    if items:
+        for item in items:
+            key, value = parse_var(item)
+            d[key] = value
+    return d
 
-        with open(outfile, "a") as fh:
-            fh.write(f"<h2>{combined_response_selection_results.name}</h2>")
-            fh.write(response_selection_table)
+def create_argument_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Combine & compare multiple sets of Rasa NLU evaluation results of the same type"
+                    "(e.g. intent classification, entity extraction) and write the comparison to an HTML table"
+    )
+    parser.add_argument("result_files",
+                        metavar="RESULT_FILEPATH_1=RESULT_LABEL1 RESULT_FILEPATH_2=RESULT_LABEL2 ...",
+                        nargs='+',
+                        help='The json report files that should be compared and the labels to associate with each of them. '
+                            'All results must be of the same type (e.g. intent classification, entity extraction)'
+                             'Labels for files should be unique.'
+                             'For example: '
+                             '\'intent_report.json=1 second_intent_report.json=2\'. '
+                             'Do not put spaces before or after the = sign. '
+                             'Label values with spaces should be put in double quotes. '
+                             'For example: '
+                             '\'previous_results/DIETClassifier_report.json="Previous Stable Results" results/DIETClassifier_report.json="New Results"\''
+    )
 
-def _create_argument_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Compare two sets of NLU evaluation results and format them as an HTML table")
-    parser.add_argument("--result_dirs", nargs="+", default=["results"], help="List of directories containing separate sets of NLU evaluation results")
     parser.add_argument(
-        "--outfile",
-        help=(
-            "File to write HTML table to"
-        ),
+        "--html_outfile",
+        help=("File to which to write HTML table. File will be overwritten unless --append_to_outfile is specified."),
         default="formatted_compared_results.html",
     )
+
+    parser.add_argument(
+        "--append_to_outfile",
+        help=("Append to html_outfile instead of overwriting it. "),
+        action='store_true'
+    )
+
+    parser.add_argument(
+        "--title",
+        help=("Title of HTML table."),
+        default="Compared NLU Evaluation Results",
+    )
+
+    parser.add_argument(
+        "--label_name",
+        help=("Type of labels predicted e.g. 'intent', 'entity', 'retrieval intent'"),
+        default="label",
+    )
+
+    parser.add_argument(
+        "--metrics_to_diff",
+        help=("Metrics to consider when determining changes across result sets."),
+        nargs="+",
+        default=["support", "f1-score"],
+    )
+
+    parser.add_argument(
+        "--metrics_to_display",
+        help=("Metrics to display in resulting HTML table."),
+        nargs="+",
+        default=["support", "f1-score"],
+    )
+
+    parser.add_argument(
+        "--sort_by_metric",
+        help=("Metrics to sort by (descending) in resulting HTML table."),
+        default="support"
+    )
+
+    parser.add_argument(
+        "--display_only_diff",
+        help=("Display only labels with a change in at least one metric across result sets. Default is False"),
+        action='store_true'
+    )
+
+
     return parser
+
+def main():
+    parser = create_argument_parser()
+    args = parser.parse_args()
+    result_files = [NamedResultFile(filepath=filepath, name=name) for filepath, name in parse_vars(args.result_files).items()]
+    combined_results = combine_results(result_files=result_files, label_name=args.label_name)
+
+    if args.display_only_diff:
+        labels_with_changes = combined_results.find_labels_with_changes(
+            metrics_to_diff=args.metrics_to_diff
+        )
+
+        table = combined_results.create_html_table(
+            labels=labels_with_changes, columns=args.metrics_to_display, sort_by_metric=args.sort_by_metric
+        )
+
+    else:
+        table = combined_results.create_html_table(columns=args.metrics_to_display, sort_by_metric=args.sort_by_metric)
+
+    mode = "w+"
+    if args.append_to_outfile:
+        mode = "a+"
+    with open(args.html_outfile, mode) as fh:
+        fh.write(f"<h1>{args.title}</h1>")
+        if args.display_only_diff:
+            fh.write(
+                f"<body>Only the {args.label_name}(s) that show differences in at least one of the following metrics: {args.metrics_to_diff} are displayed.</body>"
+            )
+        fh.write(table)
 
 
 if __name__ == "__main__":
-    parser = _create_argument_parser()
-    args = parser.parse_args()
-    result_dirs = args.result_dirs
-    outfile = args.outfile
-    compare_and_format_results(result_dirs, outfile)
+    main()
