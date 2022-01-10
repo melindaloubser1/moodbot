@@ -18,7 +18,7 @@ class NamedResultFile(NamedTuple):
 class NLUEvaluationResult:
     """
     Represents a single set of Rasa NLU evaluation results
-    i.e. the content of a single <report-type>_report.json file 
+    i.e. the content of a single <report-type>_report.json file
     e.g. intent_report.json, DIETClassifier_report.json, response_selection_report.json
     """
 
@@ -47,14 +47,12 @@ class NLUEvaluationResult:
         self.report = report
 
     def df_to_report(self) -> Dict:
-        """Convert dataframe to dict representation
-        """
+        """Convert dataframe to dict representation"""
         report = self.df.T.to_dict()
         return report
 
     def report_to_df(self):
-        """Convert dict representation to dataframe
-        """
+        """Convert dict representation to dataframe"""
         df = pd.DataFrame.from_dict(self.report).transpose()
         df.name = self.name
         df = self.drop_excluded_classes(df)
@@ -117,11 +115,10 @@ class NLUEvaluationResult:
         ]
         return labels_avg_first
 
-    def create_html_table(
-        self, columns=None, labels=None, sort_by_metric="support"):
+    def create_html_table(self, columns=None, labels=None, sort_by_metric="support"):
         """Create an HTML table of the results sorted by the metric specified.
 
-        If `columns` or `labels` is provided, only those columns/rows will be included. 
+        If `columns` or `labels` is provided, only those columns/rows will be included.
         Otherwise all columns/rows will be included.
         """
         df = self.df
@@ -137,7 +134,7 @@ class NLUEvaluationResult:
 
 class CombinedNLUEvaluationResults(NLUEvaluationResult):
     """
-    Combine and compare multiple sets of Rasa NLU evaluation results of the same kind 
+    Combine and compare multiple sets of Rasa NLU evaluation results of the same kind
     (e.g. intent classification, entity extraction).
     """
 
@@ -162,8 +159,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         self.metrics_to_diff = metrics_to_diff
 
     def result_sets_to_df(self) -> pd.DataFrame:
-        """Combine multiple sets of evaluation results into a single dataframe
-        """
+        """Combine multiple sets of evaluation results into a single dataframe"""
         if not self.result_sets:
             columns = pd.MultiIndex(levels=[[], []], codes=[[], []])
             index = pd.Index([])
@@ -188,8 +184,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         self.df.index.set_names([self.label_name], inplace=True)
 
     def df_to_report(self):
-        """Convert dataframe to dict representation
-        """
+        """Convert dataframe to dict representation"""
         report = {
             label: {
                 metric: self.df.loc[label].xs(metric).to_dict()
@@ -201,8 +196,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         return report
 
     def df_to_result_sets(self):
-        """Split dataframe out into the component result sets.
-        """
+        """Split dataframe out into the component result sets."""
         result_sets = []
         for result_set_name in self.df.columns.get_level_values("result_set"):
             result = NLUEvaluationResult(
@@ -232,8 +226,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         )
 
     def write_json_report(self, filepath):
-        """Write combined report of all result sets to json file.
-        """
+        """Write combined report of all result sets to json file."""
         with open(filepath, "w+") as fh:
             json.dump(self.report, fh, indent=2)
 
@@ -308,7 +301,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
 
         If `include_diffs` is True, columns from self.diff_df will be included/available for selection.
         Otherwise, only columns from self.df will be included/available for selection.
-        If `columns` or `labels` is provided, only those columns/rows will be included. 
+        If `columns` or `labels` is provided, only those columns/rows will be included.
         Otherwise all columns/rows will be included.
         """
         if include_diffs:
@@ -331,8 +324,7 @@ def combine_results(
     title="Combined NLU Evaluation Results",
     metrics_to_diff=None,
 ) -> CombinedNLUEvaluationResults:
-    """Combine multiple NLU evaluation result files into a CombinedNLUEvaluationResults instance
-    """
+    """Combine multiple NLU evaluation result files into a CombinedNLUEvaluationResults instance"""
     result_sets = [
         NLUEvaluationResult(
             name=result_file.name,
