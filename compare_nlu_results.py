@@ -32,6 +32,7 @@ class NLUEvaluationResult:
         self.name = name
         self.label_name = label_name
         self.df = self.report_to_df()
+        self.drop_excluded_classes()
         self.set_index_names()
 
     def from_json_report(self, filepath) -> Dict:
@@ -55,7 +56,6 @@ class NLUEvaluationResult:
         """Convert dict representation to dataframe"""
         df = pd.DataFrame.from_dict(self.report).transpose()
         df.name = self.name
-        df = self.drop_excluded_classes(df)
         return df
 
     def set_index_names(self):
@@ -67,18 +67,16 @@ class NLUEvaluationResult:
         self.df.columns.set_names("metric", inplace=True)
         self.df.index.set_names(self.label_name, inplace=True)
 
-    @classmethod
-    def drop_excluded_classes(cls, df):
+    def drop_excluded_classes(self):
         """
         Drop the labels that don't follow the same structure
         as all other labels i.e. `accuracy`.
         """
         for excluded_class in ["accuracy"]:
             try:
-                df = df.drop(excluded_class)
-            except:
+                self.df.drop(excluded_class, inplace=True)
+            except KeyError:
                 pass
-        return df
 
     @classmethod
     def drop_non_numeric_metrics(cls, df):
@@ -88,7 +86,7 @@ class NLUEvaluationResult:
         for non_numeric_metric in ["confused_with"]:
             try:
                 df = df.drop(columns=non_numeric_metric)
-            except:
+            except KeyError:
                 pass
         return df
 
@@ -153,7 +151,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         self.label_name = label_name
         self.df = self.result_sets_to_df()
         self.set_index_names()
-        self.drop_excluded_classes(joined_df)
+        self.drop_excluded_classes()
         self.report = self.df_to_report()
         self.base_result_set_name = base_result_set_name
         self.metrics_to_diff = metrics_to_diff
@@ -170,7 +168,6 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
                 axis=1,
                 keys=[result.name for result in self.result_sets],
             )
-        self.drop_excluded_classes(joined_df)
         return joined_df
 
     def set_index_names(self):
@@ -235,6 +232,7 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
         with open(filepath, "r") as fh:
             self.report = json.load(fh)
         self.df = self.report_to_df()
+        self.drop_excluded_classes()
         self.set_index_names()
         self.result_sets = self.df_to_result_sets()
 

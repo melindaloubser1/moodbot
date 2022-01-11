@@ -60,34 +60,34 @@ jobs:
     - name: Run cross-val comparison for intents
       run: |
         python compare_nlu_results.py \
-             --result_sets ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/intent_report.json="Stable" results/intent_report.json="Incoming" \
+             --result_files ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/intent_report.json="Stable" results/intent_report.json="Incoming" \
              --title "Intent Classification Results Compared" \
              --label_name intent \
              --metrics_to_diff support f1-score \
              --metrics_to_display support f1-score confused_with \
              --sort_by_metric support
 
-    - name: Run cross-val comparison for intents
-      run: |
-        python compare_nlu_results.py \
-             --result_sets ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/DIETClassifier_report.json="Stable" results/DIETClassifier_report.json="Incoming" \
-             --title "Entity Extraction Results Compared" \
-             --label_name entity \
-             --metrics_to_diff support f1-score \
-             --metrics_to_display support f1-score precision recall \
-             --sort_by_metric support \
-             --append
+    # - name: Run cross-val comparison for intents
+    #   run: |
+    #     python compare_nlu_results.py \
+    #          --result_files ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/DIETClassifier_report.json="Stable" results/DIETClassifier_report.json="Incoming" \
+    #          --title "Entity Extraction Results Compared" \
+    #          --label_name entity \
+    #          --metrics_to_diff support f1-score \
+    #          --metrics_to_display support f1-score precision recall \
+    #          --sort_by_metric support \
+    #          --append
 
-    - name: Run cross-val comparison for response selection
-      run: |
-        python compare_nlu_results.py \
-             --result_sets ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/response_selection_report.json="Stable" results/response_selection_report.json="Incoming" \
-             --title "Response Selection Results Compared" \
-             --label_name retrieval_intent \
-             --metrics_to_diff support f1-score \
-             --metrics_to_display support f1-score precision recall \
-             --sort_by_metric support \
-             --append
+    # - name: Run cross-val comparison for response selection
+    #   run: |
+    #     python compare_nlu_results.py \
+    #          --result_files ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/response_selection_report.json="Stable" results/response_selection_report.json="Incoming" \
+    #          --title "Response Selection Results Compared" \
+    #          --label_name retrieval_intent \
+    #          --metrics_to_diff support f1-score \
+    #          --metrics_to_display support f1-score precision recall \
+    #          --sort_by_metric support \
+    #          --append
 
     - name: Post cross-val comparison to PR
       uses: amn41/comment-on-pr@comment-file-contents
