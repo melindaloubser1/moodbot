@@ -19,26 +19,38 @@ intents:
     use_entities: []
 - bot_challenge:
     use_entities: []
-- click_known_deeplink:
+- deeplink_tiger:
     use_entities: []
-- contact:
+- deeplink_panda:
     use_entities: []
-
-entities:
-- name
-- title
-
+- start:
+    use_entities: []
+- intro:
+    use_entities: []
 slots: 
   name:
+    type: any
+  title:
     type: any
 responses:
   utter_buttons:
   - text: These buttons are left in the conversation for later use
     buttons:
       - title: tiger
-        image: https://i.imgur.com/nGF1K8f.jpg
+        payload: /deeplink_tiger
       - title: panda
-        image: https://i.imgur.com/M6LBFlV.jpeg
+        payload: /deeplink_panda
+  utter_do_intro:
+  - text: Please click the button below to continue
+    buttons:
+      - title: Do intro form
+        payload: /intro
+  utter_tiger:
+    - text: A tiger!
+      image: https://i.imgur.com/nGF1K8f.jpg
+  utter_panda:
+    - text: A panda!
+      image: https://i.imgur.com/M6LBFlV.jpeg
   utter_greet:
   - text: Hey! How are you {title} {name}?
   utter_cheer_up:
@@ -52,15 +64,18 @@ responses:
   - text: Bye
   utter_iamabot:
   - text: I am a bot, powered by Rasa.
-actions:
- - validate_greet_form
+  utter_ask_name:
+  - text: What is your name?
+  utter_ask_title:
+  - text: What is your title?
 forms: 
   intro_form:
+    ignored_intents:
+      - deeplink_panda
+      - deeplink_tiger
     required_slots:
       name:
-        - type: from_entity
-          entity: name
+        - type: from_text
       title:
-        - type: from_entity
-          entity: title
+        - type: from_text
 e2e_actions: []

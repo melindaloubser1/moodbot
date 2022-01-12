@@ -1,23 +1,39 @@
 version: "2.0"
 rules:
-- rule: Say goodbye anytime the user says goodbye
+- rule: start
+  steps:
+  - intent: start
+  - action: utter_buttons
+  - action: utter_do_intro
+- rule: goodbye
   steps:
   - intent: goodbye
   - action: utter_goodbye
+
 - rule: Say 'I am a bot' anytime the user challenges
   steps:
   - intent: bot_challenge
   - action: utter_iamabot
-- rule: greet
-  steps:
-  - intent: greet
-  - action: greet_form
-  - active_loop: greet_form
 
-- rule: greet
-  condition:
-    - active_loop: greet_form
+- rule: show panda image when button clicked
   steps:
-  - action: greet_form
+  - intent: deeplink_panda
+  - action: utter_panda
+- rule: show tiger image when button clicked
+  steps:
+  - intent: deeplink_tiger
+  - action: utter_tiger
+
+- rule: activate intro form
+  steps:
+  - intent: intro
+  - action: intro_form
+  - active_loop: intro_form
+
+- rule: complete intro form
+  condition:
+    - active_loop: intro_form
+  steps:
+  - action: intro_form
   - active_loop: null
   - action: utter_greet
