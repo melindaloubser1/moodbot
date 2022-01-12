@@ -68,6 +68,8 @@ responses:
   - text: What is your name?
   utter_ask_title:
   - text: What is your title?
+actions:
+  - validate_intro_form
 forms: 
   intro_form:
     ignored_intents:
