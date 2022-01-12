@@ -6,26 +6,41 @@ session_config:
   carry_over_slots_to_new_session: true
 intents:
 - greet:
-    use_entities: true
+    use_entities: []
 - goodbye:
-    use_entities: true
+    use_entities: []
 - affirm:
-    use_entities: true
+    use_entities: []
 - deny:
-    use_entities: true
+    use_entities: []
 - mood_great:
-    use_entities: true
+    use_entities: []
 - mood_unhappy:
-    use_entities: true
+    use_entities: []
 - bot_challenge:
-    use_entities: true
-entities: []
+    use_entities: []
+- click_known_deeplink:
+    use_entities: []
+- contact:
+    use_entities: []
+
+entities:
+- name
+- title
+
 slots: 
   name:
     type: any
 responses:
+  utter_buttons:
+  - text: These buttons are left in the conversation for later use
+    buttons:
+      - title: tiger
+        image: https://i.imgur.com/nGF1K8f.jpg
+      - title: panda
+        image: https://i.imgur.com/M6LBFlV.jpeg
   utter_greet:
-  - text: Hey! How are you {name}?
+  - text: Hey! How are you {title} {name}?
   utter_cheer_up:
   - image: https://i.imgur.com/nGF1K8f.jpg
     text: 'Here is something to cheer you up:'
@@ -40,10 +55,12 @@ responses:
 actions:
  - validate_greet_form
 forms: 
-  greet_form:
+  intro_form:
     required_slots:
       name:
-        - type: from_trigger_intent
-          intent: greet
-          value: Stranger
+        - type: from_entity
+          entity: name
+      title:
+        - type: from_entity
+          entity: title
 e2e_actions: []
