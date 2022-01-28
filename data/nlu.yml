@@ -1,13 +1,11 @@
 version: "2.0"
 
 nlu:
-- intent: greet
+- intent: amount
   examples: |
-    - hey
-    - hello
-    - hi [12](amount) [euro](currency)
-    - hi [345](amount) [euro](currency)
-
+    - it's 12 euro
+    - it's 345 euro
+    - it's 12euro
 - intent: goodbye
   examples: |
     - bye
