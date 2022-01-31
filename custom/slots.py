@@ -2,7 +2,7 @@ import logging
 import re
 from typing import Any, Dict, List, Text, Optional, Union
 
-from rasa.shared.core.slots import Slot
+from rasa.shared.core.slots import Slot, CategoricalSlot
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +18,11 @@ class LimitSlot(Slot):
           limit: 100
     """
 
-    type_name = "prioritized"
-
     def __init__(
         self,
         name: Text,
         limit: int,
+        mappings: List[Dict[Text, Any]],
         initial_value: Any = None,
         value_reset_delay: Optional[int] = None,
         auto_fill: bool = True,
@@ -31,10 +30,10 @@ class LimitSlot(Slot):
     ) -> None:
 
         super().__init__(
-            name,
-            initial_value,
-            value_reset_delay,
-            auto_fill,
+            name=name,
+            initial_value=initial_value,
+            mappings=mappings,
+            value_reset_delay=value_reset_delay,
             influence_conversation=influence_conversation,
         )
         self.limit = limit

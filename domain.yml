@@ -1,4 +1,4 @@
-version: '2.0'
+version: "3.0"
 config:
   store_entities_as_slots: true
 session_config:
@@ -19,12 +19,15 @@ intents:
     use_entities: []
 - bot_challenge:
     use_entities: []
-entities: 
-  - limit
+entities:
+- limit
 slots:
   limit:
     type: custom.slots.LimitSlot
     limit: 1000
+    mappings:
+    - type: from_entity
+      entity: limit
 responses:
   utter_greet:
   - text: Hey! How are you?
