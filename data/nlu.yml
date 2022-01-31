@@ -8,7 +8,7 @@ nlu:
     - hi
     - hello there
     - good morning
-    - good evening
+    - good evening 
 
 
 - intent: goodbye
