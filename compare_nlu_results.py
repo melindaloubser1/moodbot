@@ -317,9 +317,9 @@ class CombinedNLUEvaluationResults(NLUEvaluationResult):
 
 
 def combine_results(
-    result_files: List[NamedResultFile],
+    nlu_result_files: List[NamedResultFile],
     label_name: Optional[Text] = "label",
-    title="Combined NLU Evaluation Results",
+    table_title="Combined NLU Evaluation Results",
     metrics_to_diff=None,
 ) -> CombinedNLUEvaluationResults:
     """Combine multiple NLU evaluation result files into a CombinedNLUEvaluationResults instance"""
@@ -329,10 +329,10 @@ def combine_results(
             label_name=label_name,
             json_report_filepath=result_file.filepath,
         )
-        for result_file in result_files
+        for result_file in nlu_result_files
     ]
     combined_results = CombinedNLUEvaluationResults(
-        name=title,
+        name=table_title,
         result_sets=result_sets,
         label_name=label_name,
         metrics_to_diff=metrics_to_diff,
@@ -376,7 +376,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "Writes results to an HTML table and to a json file."
     )
     parser.add_argument(
-        "--result_files",
+        "--nlu_result_files",
         required=True,
         metavar="RESULT_FILEPATH_1=RESULT_LABEL1 RESULT_FILEPATH_2=RESULT_LABEL2 ...",
         nargs="+",
@@ -395,13 +395,13 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--html_outfile",
         help=(
-            "File to which to write HTML table. File will be overwritten unless --append is specified."
+            "File to which to write HTML table. File will be overwritten unless --append_table is specified."
         ),
         default="formatted_compared_results.html",
     )
 
     parser.add_argument(
-        "--append",
+        "--append_table",
         help=("Append to html_outfile instead of overwriting it."),
         action="store_true",
     )
@@ -413,7 +413,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--title",
+        "--table_title",
         help=("Title of HTML table."),
         default="Compared NLU Evaluation Results",
     )
@@ -458,12 +458,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
 def main():
     parser = create_argument_parser()
     args = parser.parse_args()
-    result_files = [
+    nlu_result_files = [
         NamedResultFile(filepath=filepath, name=name)
-        for filepath, name in parse_vars(args.result_files).items()
+        for filepath, name in parse_vars(args.nlu_result_files).items()
     ]
     combined_results = combine_results(
-        result_files=result_files,
+        nlu_result_files=nlu_result_files,
         label_name=args.label_name,
         metrics_to_diff=args.metrics_to_diff,
     )
@@ -484,10 +484,10 @@ def main():
         )
 
     mode = "w+"
-    if args.append:
+    if args.append_table:
         mode = "a+"
     with open(args.html_outfile, mode) as fh:
-        fh.write(f"<h1>{args.title}</h1>")
+        fh.write(f"<h1>{args.table_title}</h1>")
         if args.display_only_diff:
             fh.write(
                 f"<body>Only averages and the {args.label_name}(s) that show differences in at least one of the following metrics: {args.metrics_to_diff} are displayed.</body>"
