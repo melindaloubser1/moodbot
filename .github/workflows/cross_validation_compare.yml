@@ -64,7 +64,7 @@ jobs:
         metrics_to_diff: support f1-score
         metrics_to_display: support f1-score confused_with
         sort_by_metric: support
-        append: true
+        append_table: true
         display_only_diff: true
 
     - name: Compare Intent Results
@@ -76,7 +76,7 @@ jobs:
         metrics_to_diff: support f1-score precision recall
         metrics_to_display: support f1-score precision recall
         sort_by_metric: support
-        append: true
+        append_table: true
         display_only_diff: true
 
     - name: Post cross-val comparison to PR
