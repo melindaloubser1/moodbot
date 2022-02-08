@@ -49,7 +49,7 @@ jobs:
     - name: Set curent names
       run: |
         current_run_name=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
-        comparison_name=comparison_$current_run_name-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
+        comparison_name=comparing_$current_run_name-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
         echo "CURRENT_RUN_NAME=$current_run_name" >> $GITHUB_ENV
         echo "COMPARISON_NAME=$comparison_name" >> $GITHUB_ENV
 
