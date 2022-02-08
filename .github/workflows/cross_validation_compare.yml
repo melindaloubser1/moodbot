@@ -47,6 +47,7 @@ jobs:
         echo "LAST_RESULTS_ON_TARGET_BRANCH_PATH=$LAST_RESULTS_ON_TARGET_BRANCH_PATH" >> $GITHUB_ENV
 
     - name: Set curent names
+      run: |
         current_run_name=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
         comparison_name=$current_run_name-compared_to-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
         echo "CURRENT_RUN_NAME=$current_run_name" >> $GITHUB_ENV
