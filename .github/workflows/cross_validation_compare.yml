@@ -3,9 +3,8 @@ on:
     paths:
       - 'data/nlu/*'
       - 'config.yml'
-      - 'requirements-rasa.txt'
+      - 'requirements.txt'
       - '.github/workflows/cross_validation_compare.yml'
-      - 'compare_nlu_results.py'
 
 env:
   GCLOUD_VERSION: "297.0.1"
@@ -56,7 +55,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -r requirements-rasa.txt
+        pip install -r requirements.txt
 
     - name: Run cross-validation
       run: |
