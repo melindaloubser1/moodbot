@@ -45,7 +45,14 @@ jobs:
         echo $LAST_RESULTS_ON_TARGET_BRANCH_URL
         LAST_RESULTS_ON_TARGET_BRANCH_PATH=$(basename $LAST_RESULTS_ON_TARGET_BRANCH_URL)
         gsutil -m cp -r ${LAST_RESULTS_ON_TARGET_BRANCH_URL} .
-        echo ::set-output name=LAST_RESULTS_ON_TARGET_BRANCH_PATH::"$LAST_RESULTS_ON_TARGET_BRANCH_PATH"
+        echo "LAST_RESULTS_ON_TARGET_BRANCH_PATH=$LAST_RESULTS_ON_TARGET_BRANCH_PATH" >> $GITHUB_ENV
+
+    - name: Set curent names
+        current_run_name=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
+        comparison_name=$current_run_name-compared_to-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
+        echo "CURRENT_RUN_NAME=$current_run_name" >> $GITHUB_ENV
+        echo "COMPARISON_NAME=$comparison_name" >> $GITHUB_ENV
+
 
     - name: Install dependencies
       run: |
@@ -58,26 +65,30 @@ jobs:
     - name: Compare Intent Results
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
       with:
-        nlu_result_files: ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/intent_report.json="Stable" results/intent_report.json="Incoming"
+        nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/intent_report.json="Stable" results/intent_report.json="Incoming"
         table_title: Intent Classification Results
+        json_outfile: results/intent_classification_${{ env.COMPARISON_NAME }}.json
+        html_outfile: results/${{ env.COMPARISON_NAME }}.html
+        append_table: true
+        display_only_diff: true
         label_name: intent
         metrics_to_diff: support f1-score
         metrics_to_display: support f1-score confused_with
         sort_by_metric: support
-        append_table: true
-        display_only_diff: true
 
     - name: Compare Intent Results
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
       with:
-        nlu_result_files: ${{ steps.prev_results.outputs.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/DIETClassifier_report.json="Stable" results/DIETClassifier_report.json="Incoming"
+        nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/DIETClassifier_report.json="Stable" results/DIETClassifier_report.json="Incoming"
         table_title: Entity Extraction Results
+        json_outfile: results/DIETClassifier_${{ env.COMPARISON_NAME }}.json
+        html_outfile: results/${{ env.COMPARISON_NAME }}.html
+        append_table: true
+        display_only_diff: true
         label_name: entity
         metrics_to_diff: support f1-score precision recall
         metrics_to_display: support f1-score precision recall
         sort_by_metric: support
-        append_table: true
-        display_only_diff: true
 
     - name: Post cross-val comparison to PR
       uses: amn41/comment-on-pr@comment-file-contents
@@ -88,6 +99,4 @@ jobs:
 
     - name: Upload new results to storage bucket
       run: |
-        NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
-        echo $NAME
-        gsutil -m cp -r results/* ${{ secrets.STORAGE_BUCKET_URL }}/"${NAME}"
+        gsutil -m cp -r results/* ${{ secrets.STORAGE_BUCKET_URL }}/${{ env.CURRENT_RUN_NAME }}
