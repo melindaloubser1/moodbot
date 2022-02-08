@@ -95,7 +95,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        msg: formatted_compared_results.html
+        msg: results/${{ env.COMPARISON_NAME }}.html
 
     - name: Upload new results to storage bucket
       run: |
