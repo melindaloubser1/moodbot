@@ -49,7 +49,7 @@ jobs:
     - name: Set curent names
       run: |
         current_run_name=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
-        comparison_name=$current_run_name-compared_to-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
+        comparison_name=comparison_$current_run_name-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
         echo "CURRENT_RUN_NAME=$current_run_name" >> $GITHUB_ENV
         echo "COMPARISON_NAME=$comparison_name" >> $GITHUB_ENV
 
@@ -67,7 +67,7 @@ jobs:
       with:
         nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/intent_report.json="Stable" results/intent_report.json="Incoming"
         table_title: Intent Classification Results
-        json_outfile: results/intent_classification_${{ env.COMPARISON_NAME }}.json
+        json_outfile: results/${{ env.COMPARISON_NAME }}_intent_classification.json
         html_outfile: results/${{ env.COMPARISON_NAME }}.html
         append_table: true
         display_only_diff: true
@@ -81,7 +81,7 @@ jobs:
       with:
         nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/DIETClassifier_report.json="Stable" results/DIETClassifier_report.json="Incoming"
         table_title: Entity Extraction Results
-        json_outfile: results/DIETClassifier_${{ env.COMPARISON_NAME }}.json
+        json_outfile: results/${{ env.COMPARISON_NAME }}_DIETClassifier.json
         html_outfile: results/${{ env.COMPARISON_NAME }}.html
         append_table: true
         display_only_diff: true
