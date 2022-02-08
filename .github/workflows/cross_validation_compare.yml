@@ -65,7 +65,7 @@ jobs:
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
       with:
         nlu_result_files: "results/intent_report.json=Stable results_2/intent_report.json=Incoming"
-        table_title: "Compared"
+        table_title: "Intent Classification Results Compared"
         label_name: "intent"
         metrics_to_diff: "support f1-score"
         metrics_to_display: "support f1-score confused_with"
