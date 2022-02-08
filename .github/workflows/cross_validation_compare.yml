@@ -65,11 +65,11 @@ jobs:
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
       with:
         nlu_result_files: results/intent_report.json="Stable Results" results_2/intent_report.json="Incoming Results"
-        table_title: "Intent Classification Results Compared"
-        label_name: "intent"
-        metrics_to_diff: "support f1-score"
-        metrics_to_display: "support f1-score confused_with"
-        sort_by_metric: "support"
+        table_title: Intent Classification Results Compared
+        label_name: intent
+        metrics_to_diff: support f1-score
+        metrics_to_display: support f1-score confused_with
+        sort_by_metric: support
 
     # - name: Post cross-val comparison to PR
     #   uses: amn41/comment-on-pr@comment-file-contents
