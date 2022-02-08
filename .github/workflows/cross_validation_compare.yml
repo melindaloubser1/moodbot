@@ -70,15 +70,15 @@ jobs:
         metrics_to_display: support f1-score confused_with
         sort_by_metric: support
 
-    # - name: Post cross-val comparison to PR
-    #   uses: amn41/comment-on-pr@comment-file-contents
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     msg: formatted_compared_results.html
+    - name: Post cross-val comparison to PR
+      uses: amn41/comment-on-pr@comment-file-contents
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        msg: formatted_compared_results.html
 
-    # - name: Upload new results to storage bucket
-    #   run: |
-    #     NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
-    #     echo $NAME
-    #     gsutil -m cp -r results/* ${{ secrets.STORAGE_BUCKET_URL }}/"${NAME}"
+    - name: Upload new results to storage bucket
+      run: |
+        NAME=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
+        echo $NAME
+        gsutil -m cp -r results/* ${{ secrets.STORAGE_BUCKET_URL }}/"${NAME}"
