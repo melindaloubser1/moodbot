@@ -39,14 +39,13 @@ jobs:
     - name: Download previous results
       id: prev_results
       run: |
-        TARGET_BRANCH=${{ github.event.pull_request.base.ref }}
-        LAST_RESULTS_ON_TARGET_BRANCH_URL=$(gsutil ls ${{ secrets.STORAGE_BUCKET_URL }} | grep $TARGET_BRANCH | sort -k2 | tail -n1)
-        echo $LAST_RESULTS_ON_TARGET_BRANCH_URL
-        LAST_RESULTS_ON_TARGET_BRANCH_PATH=$(basename $LAST_RESULTS_ON_TARGET_BRANCH_URL)
-        gsutil -m cp -r ${LAST_RESULTS_ON_TARGET_BRANCH_URL} .
-        echo "LAST_RESULTS_ON_TARGET_BRANCH_PATH=$LAST_RESULTS_ON_TARGET_BRANCH_PATH" >> $GITHUB_ENV
+        target_branch=${{ github.event.pull_request.base.ref }}
+        last_results_on_target_branch_url=$(gsutil ls ${{ secrets.STORAGE_BUCKET_URL }} | grep $target_branch | sort -k2 | tail -n1)
+        last_results_on_target_branch_path=$(basename $last_results_on_target_branch_url)
+        gsutil -m cp -r ${last_results_on_target_branch_url} .
+        echo "LAST_RESULTS_ON_TARGET_BRANCH_PATH=$last_results_on_target_branch_url" >> $GITHUB_ENV
 
-    - name: Set curent names
+    - name: Set comparison name
       run: |
         current_run_name=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
         comparison_name=comparing_$current_run_name-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
