@@ -66,8 +66,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        nlu_result_files: results/intent_report.json="Stable" results_2/intent_report.json="Incoming"
-        table_title: "Intent Classification Results Compared"
+        nlu_result_files: 'results/intent_report.json="Stable" results_2/intent_report.json="Incoming"'
+        table_title: 'Intent Classification Results Compared'
         label_name: intent
         metrics_to_diff: support f1-score
         metrics_to_display: support f1-score confused_with
