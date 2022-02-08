@@ -64,7 +64,7 @@ jobs:
     - name: Run cross-val comparison for intents
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
       with:
-        nlu_result_files: "results/intent_report.json=Stable results_2/intent_report.json=Incoming"
+        nlu_result_files: 'results/intent_report.json="Stable Results" results_2/intent_report.json="Incoming Results"'
         table_title: "Intent Classification Results Compared"
         label_name: "intent"
         metrics_to_diff: "support f1-score"
