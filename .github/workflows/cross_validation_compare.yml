@@ -76,7 +76,7 @@ jobs:
         metrics_to_display: support f1-score confused_with
         sort_by_metric: support
 
-    - name: Compare Intent Results
+    - name: Compare Entity Results
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
       with:
         nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/DIETClassifier_report.json="Stable" results/DIETClassifier_report.json="Incoming"
