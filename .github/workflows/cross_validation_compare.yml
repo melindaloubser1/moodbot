@@ -86,7 +86,7 @@ jobs:
         label_name: entity
         metrics_to_diff: support f1-score precision recall
         metrics_to_display: support f1-score precision recall
-        sort_by_metric: support
+        metric_to_sort_by: support
 
     - name: Post cross-val comparison to PR
       uses: amn41/comment-on-pr@comment-file-contents
