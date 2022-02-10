@@ -39,11 +39,12 @@ jobs:
         last_results_on_target_branch_path=$(basename $last_results_on_target_branch_url)
         gsutil -m cp -r ${last_results_on_target_branch_url} .
         echo "LAST_RESULTS_ON_TARGET_BRANCH_PATH=$last_results_on_target_branch_url" >> $GITHUB_ENV
+        ls ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
 
     - name: Set comparison name
       run: |
-        current_run_name=${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID
-        comparison_name=comparing_$current_run_name-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
+        current_run_name="${GITHUB_REF##*/}-$(date +'%Y%m%d-%H%M%S')-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ID"
+        comparison_name="comparing_$current_run_name-${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}"
         echo "CURRENT_RUN_NAME=$current_run_name" >> $GITHUB_ENV
         echo "COMPARISON_NAME=$comparison_name" >> $GITHUB_ENV
 
@@ -88,12 +89,12 @@ jobs:
         metrics_to_display: support f1-score precision recall
         metric_to_sort_by: support
 
-    - name: Post cross-val comparison to PR
-      uses: amn41/comment-on-pr@comment-file-contents
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        msg: results/${{ env.COMPARISON_NAME }}.html
+    # - name: Post cross-val comparison to PR
+    #   uses: amn41/comment-on-pr@comment-file-contents
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     msg: results/${{ env.COMPARISON_NAME }}.html
 
     - name: Upload new results to storage bucket
       run: |
