@@ -56,9 +56,9 @@ jobs:
     #   run: |
     #     pip install -r requirements.txt
 
-    # # - name: Run cross-validation
-    # #   run: |
-    # #     rasa test nlu --cross-validation -f 2
+    # - name: Run cross-validation
+    #   run: |
+    #     rasa test nlu --cross-validation -f 2
 
     - name: Compare Intent Results
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
