@@ -38,7 +38,7 @@ jobs:
         last_results_on_target_branch_url=$(gsutil ls ${{ secrets.STORAGE_BUCKET_URL }} | grep $target_branch | sort -k2 | tail -n1)
         last_results_on_target_branch_path=$(basename $last_results_on_target_branch_url)
         gsutil -m cp -r ${last_results_on_target_branch_url} .
-        echo "LAST_RESULTS_ON_TARGET_BRANCH_PATH=$last_results_on_target_branch_url" >> $GITHUB_ENV
+        echo "LAST_RESULTS_ON_TARGET_BRANCH_PATH=$last_results_on_target_branch_path" >> $GITHUB_ENV
         ls ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}
 
     - name: Set comparison name
