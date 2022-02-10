@@ -24,11 +24,6 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
 
-    - name: Setup python
-      uses: actions/setup-python@v1
-      with:
-        python-version: '3.8'
-
     - name: Authenticate with gcloud 🎫
       uses: google-github-actions/setup-gcloud@daadedc81d5f9d3c06d2c92f49202a3cc2b919ba 
       with:
@@ -52,14 +47,18 @@ jobs:
         echo "CURRENT_RUN_NAME=$current_run_name" >> $GITHUB_ENV
         echo "COMPARISON_NAME=$comparison_name" >> $GITHUB_ENV
 
+    # - name: Setup python
+    #   uses: actions/setup-python@v1
+    #   with:
+    #     python-version: '3.8'
 
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
+    # - name: Install dependencies
+    #   run: |
+    #     pip install -r requirements.txt
 
-    - name: Run cross-validation
-      run: |
-        rasa test nlu --cross-validation -f 2
+    # # - name: Run cross-validation
+    # #   run: |
+    # #     rasa test nlu --cross-validation -f 2
 
     - name: Compare Intent Results
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
