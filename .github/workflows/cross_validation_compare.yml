@@ -48,18 +48,18 @@ jobs:
         echo "CURRENT_RUN_NAME=$current_run_name" >> $GITHUB_ENV
         echo "COMPARISON_NAME=$comparison_name" >> $GITHUB_ENV
 
-    # - name: Setup python
-    #   uses: actions/setup-python@v1
-    #   with:
-    #     python-version: '3.8'
+    - name: Setup python
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.8'
 
-    # - name: Install dependencies
-    #   run: |
-    #     pip install -r requirements.txt
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
 
-    # - name: Run cross-validation
-    #   run: |
-    #     rasa test nlu --cross-validation -f 2
+    - name: Run cross-validation
+      run: |
+        rasa test nlu --cross-validation -f 2
 
     - name: Compare Intent Results
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
@@ -89,12 +89,12 @@ jobs:
         metrics_to_display: support f1-score precision recall
         metric_to_sort_by: support
 
-    # - name: Post cross-val comparison to PR
-    #   uses: amn41/comment-on-pr@comment-file-contents
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     msg: results/${{ env.COMPARISON_NAME }}.html
+    - name: Post cross-val comparison to PR
+      uses: amn41/comment-on-pr@comment-file-contents
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        msg: results/${{ env.COMPARISON_NAME }}.html
 
     - name: Upload new results to storage bucket
       run: |
