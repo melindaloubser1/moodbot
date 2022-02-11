@@ -73,7 +73,7 @@ jobs:
         label_name: intent
         metrics_to_diff: support f1-score
         metrics_to_display: support f1-score confused_with
-        sort_by_metric: support
+        metric_to_sort_by: support
 
     - name: Compare Entity Results
       uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
