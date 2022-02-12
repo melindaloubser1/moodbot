@@ -69,6 +69,7 @@ jobs:
         json_outfile: results/${{ env.COMPARISON_NAME }}_intent_classification.json
         html_outfile: results/${{ env.COMPARISON_NAME }}.html
         display_only_diff: false
+        append_table: false
         label_name: intent
         metrics_to_diff: support f1-score precision recall
         metric_to_sort_by: support
