@@ -62,7 +62,7 @@ jobs:
         rasa test nlu --cross-validation -f 2
 
     - name: Compare Intent Results
-      uses: RasaHQ/rasa-nlu-eval-compare-gha@main
+      uses: RasaHQ/rasa-nlu-eval-compare-gha@1.0.0
       with:
         nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/intent_report.json="Stable" results/intent_report.json="Incoming"
         table_title: Intent Classification Results
@@ -75,7 +75,7 @@ jobs:
         metric_to_sort_by: support
 
     - name: Compare Entity Results
-      uses: RasaHQ/rasa-nlu-eval-compare-gha@main
+      uses: RasaHQ/rasa-nlu-eval-compare-gha@1.0.0
       with:
         nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/DIETClassifier_report.json="Stable" results/DIETClassifier_report.json="Incoming"
         table_title: Entity Extraction Results
