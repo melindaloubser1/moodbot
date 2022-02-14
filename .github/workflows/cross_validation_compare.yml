@@ -62,19 +62,20 @@ jobs:
         rasa test nlu --cross-validation -f 2
 
     - name: Compare Intent Results
-      uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
+      uses: RasaHQ/rasa-nlu-eval-compare-gha@main
       with:
         nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/intent_report.json="Stable" results/intent_report.json="Incoming"
         table_title: Intent Classification Results
         json_outfile: results/${{ env.COMPARISON_NAME }}_intent_classification.json
         html_outfile: results/${{ env.COMPARISON_NAME }}.html
-        display_only_diff: false
+        display_only_diff: true
         label_name: intent
         metrics_to_display: support f1-score confused-with
+        metrics_to_diff: support f1-score
         metric_to_sort_by: support
 
     - name: Compare Entity Results
-      uses: RasaHQ/rasa-nlu-eval-compare-gha@v1
+      uses: RasaHQ/rasa-nlu-eval-compare-gha@main
       with:
         nlu_result_files: ${{ env.LAST_RESULTS_ON_TARGET_BRANCH_PATH }}/DIETClassifier_report.json="Stable" results/DIETClassifier_report.json="Incoming"
         table_title: Entity Extraction Results
@@ -83,6 +84,7 @@ jobs:
         append_table: true
         display_only_diff: false
         metrics_to_display: support precision recall
+        metrics_to_diff: support f1-score recall
         metric_to_sort_by: support
 
     - name: Post cross-val comparison to PR
