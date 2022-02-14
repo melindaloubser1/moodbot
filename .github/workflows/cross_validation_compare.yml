@@ -70,7 +70,7 @@ jobs:
         html_outfile: results/${{ env.COMPARISON_NAME }}.html
         display_only_diff: true
         label_name: intent
-        metrics_to_display: support f1-score confused-with
+        metrics_to_display: support f1-score confused_with
         metrics_to_diff: support f1-score
         metric_to_sort_by: support
 
