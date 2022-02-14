@@ -9,12 +9,6 @@ nlu:
     - good morning
     - good evening
     - moin
-    - hey there
-    - let's go
-    - hey dude
-    - goodmorning
-    - goodevening
-    - good afternoon
 - intent: goodbye
   examples: |
     - good afternoon
@@ -23,11 +17,6 @@ nlu:
     - cee you later
     - good night
     - bye
-    - goodbye
-    - have a nice day
-    - see you around
-    - bye bye
-    - see you later
 - intent: deny
   examples: |
     - no
@@ -36,9 +25,6 @@ nlu:
   examples: |
     - perfect
     - great
-    - so so perfect
-    - so good
-    - so perfect
 - intent: mood_unhappy
   examples: |
     - my day was horrible
@@ -46,15 +32,6 @@ nlu:
     - I don't feel very well
     - I am disappointed
     - super sad
-    - I'm so sad
-    - sad
-    - very sad
-    - unhappy
-    - not good
-    - not very good
-    - extremly sad
-    - so saad
-    - so sad
 - intent: bot_challenge
   examples: |
     - are you a bot?
@@ -64,8 +41,6 @@ nlu:
 - intent: inform
   examples: |
     - my name is [bob](name)
-    - my name is [jill](name)
-    - my name is [tim](name)
     - [percy](name) is my name
     - [124](number)
     - [35](number)
