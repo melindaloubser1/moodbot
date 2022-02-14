@@ -1,10 +1,5 @@
 on:
-  pull_request:
-    paths:
-      - 'data/nlu/*'
-      - 'config.yml'
-      - 'requirements.txt'
-      - '.github/workflows/cross_validation_compare.yml'
+  pull_request: {}
 
 env:
   GCLOUD_VERSION: "297.0.1"
