@@ -13,6 +13,10 @@ target_files:
     mood_great: data/nlu.yml
     mood_unhappy: data/nlu.yml
     bot_challenge: data/nlu.yml
-  synonyms: {}
-  regexes: {}
-  lookups: {}
+    inform: data/nlu.yml
+  synonyms:
+    big: data/synonyms.yml
+  regexes:
+    number: data/regexes.yml
+  lookups:
+    no: data/lookups.yml
