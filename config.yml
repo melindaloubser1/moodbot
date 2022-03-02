@@ -1,3 +1,7 @@
+# The config recipe.
+# https://rasa.com/docs/rasa/model-configuration/
+recipe: default.v1
+
 # Configuration for Rasa NLU.
 # https://rasa.com/docs/rasa/nlu/components/
 language: en
@@ -16,6 +20,8 @@ pipeline:
     max_ngram: 4
   - name: DIETClassifier
     epochs: 10
+    constrain_similarities: true
+
 
 # Configuration for Rasa Core.
 # https://rasa.com/docs/rasa/core/policies/
@@ -25,3 +31,4 @@ policies:
 # # See https://rasa.com/docs/rasa/policies for more information.
   - name: MemoizationPolicy
   - name: RulePolicy
+    enable_fallback_prediction: false

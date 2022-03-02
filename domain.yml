@@ -1,4 +1,4 @@
-version: "2.0"
+version: "3.0"
 
 intents:
   - greet
@@ -9,13 +9,18 @@ intents:
   - mood_unhappy
   - bot_challenge
   - intro
+  - bot
+  - not
 
 responses:
   utter_submit_intro_form:
-  - text: "submitted {name}"
+  - text: "submitted {name} {bot}"
 
   utter_ask_name:
   - text: "what is your name?"
+
+  utter_ask_bot:
+  - text: "r u a bot?"
 
   utter_greet:
   - text: "Hey! How are you?"
@@ -40,13 +45,28 @@ slots:
   name:
     type: text
     influence_conversation: false
+    mappings:
+    - type: from_text
+      not_intent: intro
+      conditions:
+        - active_loop: intro_form
+          requested_slot: name
+  bot:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: from_intent
+      intent: bot
+      value: BOT
+    - type: from_intent
+      intent: not
+      value: NOT
 
 forms:
   intro_form:
     required_slots:
-      name:
-      - type: from_text
-        intent: deny
+      - name
+      - bot
 
 actions:
 - validate_intro_form
