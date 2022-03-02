@@ -8,8 +8,15 @@ intents:
   - mood_great
   - mood_unhappy
   - bot_challenge
+  - intro
 
 responses:
+  utter_submit_intro_form:
+  - text: "submitted {name}"
+
+  utter_ask_name:
+  - text: "what is your name?"
+
   utter_greet:
   - text: "Hey! How are you?"
 
@@ -28,6 +35,21 @@ responses:
 
   utter_iamabot:
   - text: "I am a bot, powered by Rasa."
+
+slots:
+  name:
+    type: text
+    influence_conversation: false
+
+forms:
+  intro_form:
+    required_slots:
+      name:
+      - type: from_text
+        intent: deny
+
+actions:
+- validate_intro_form
 
 session_config:
   session_expiration_time: 60
