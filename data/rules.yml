@@ -1,6 +1,10 @@
-version: "2.0"
+version: "3.0"
 
 rules:
+- rule: greet
+  steps:
+  - intent: greet
+  - action: utter_greet
 
 - rule: Say 'I am a bot' anytime the user challenges
   steps:
