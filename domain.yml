@@ -51,22 +51,10 @@ slots:
       conditions:
         - active_loop: intro_form
           requested_slot: name
-  bot:
-    type: text
-    influence_conversation: false
-    mappings:
-    - type: from_intent
-      intent: bot
-      value: BOT
-    - type: from_intent
-      intent: not
-      value: NOT
-
 forms:
   intro_form:
     required_slots:
       - name
-      - bot
 
 actions:
 - validate_intro_form
