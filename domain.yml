@@ -46,7 +46,7 @@ forms:
     required_slots:
       name:
       - type: from_text
-        intent: deny
+        not_intent: intro
 
 actions:
 - validate_intro_form
