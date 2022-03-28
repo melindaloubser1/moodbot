@@ -8,8 +8,30 @@ intents:
   - mood_great
   - mood_unhappy
   - bot_challenge
+  - out_of_scope
 
 responses:
+  utter_out_of_scope/human:
+  - text: "I got no humans to give you"
+  - text: "As I said, no humans available here."
+    condition:
+      - type: slot
+        name: oos_repetitions
+        value: 1
+  - text: "Sorry, it is truly just a bot here."
+    condition:
+      - type: slot
+        name: oos_repetitions
+        value: 2
+    
+  utter_out_of_scope/meaning_of_life:
+  - text: "I do not know."
+  - text: "Since you persist, it is 42"
+    condition:
+      - type: slot
+        name: oos_repetitions
+        value: 5
+
   utter_greet:
   - text: "Hey! How are you?"
 
@@ -32,3 +54,6 @@ responses:
 session_config:
   session_expiration_time: 60
   carry_over_slots_to_new_session: true
+
+actions:
+- action_check_out_of_scope_repetitions

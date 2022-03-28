@@ -11,3 +11,9 @@ rules:
   steps:
   - intent: bot_challenge
   - action: utter_iamabot
+
+- rule: Handle out of out_of_scope
+  steps:
+  - intent: out_of_scope
+  - action: action_check_out_of_scope_repetitions
+  - action: utter_out_of_scope
