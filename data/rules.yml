@@ -15,5 +15,5 @@ rules:
 - rule: Handle out of out_of_scope
   steps:
   - intent: out_of_scope
-  - action: action_check_out_of_scope_repetitions
+  - action: action_check_successive_intent_repetitions
   - action: utter_out_of_scope
