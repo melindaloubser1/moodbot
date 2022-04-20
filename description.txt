@@ -1,0 +1,1 @@
+An example of the smallest complete Rasa bot - takes about 10 seconds to train.
