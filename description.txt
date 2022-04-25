@@ -1,0 +1,1 @@
+An example of a bot with two consecutive forms where the second form should reject slot values set by the last user message of the previous form
