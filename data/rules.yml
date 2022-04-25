@@ -1,11 +1,6 @@
 version: "3.0"
 
 rules:
-- rule: greet
-  steps:
-  - intent: greet
-  - action: utter_greet
-
 - rule: Say 'I am a bot' anytime the user challenges
   steps:
   - intent: intro
@@ -17,5 +12,9 @@ rules:
     - active_loop: intro_form
   steps:
   - action: intro_form
+  - active_loop: null
+  - action: utter_submit_intro_form
+  - action: second_intro_form
+  - active_loop: second_intro_form
   - active_loop: null
   - action: utter_submit_intro_form

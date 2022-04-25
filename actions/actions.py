@@ -17,12 +17,19 @@ class ValidatePredefinedSlots(ValidationAction):
         tracker: Tracker,
         domain: DomainDict,
     ):
-        if not tracker.active_loop or not tracker.get_slot("form_initialized"):
+        if (
+            not tracker.active_loop
+            or not tracker.get_slot("form_initialized")
+        ):
             return {"form_initialized": False}
         else:
             return {"form_initialized": True}
 
+
 class CustomFormValidationAction(FormValidationAction, ABC):
+    def name(self) -> Text:
+        return "custom_form_validation_action"
+
     async def run(
         self,
         dispatcher: CollectingDispatcher,
@@ -30,7 +37,8 @@ class CustomFormValidationAction(FormValidationAction, ABC):
         domain: DomainDict,
     ) -> List[EventType]:
         events = []
-        if not tracker.get_slot("form_initialized"):
+        if not tracker.get_slot("form_initialized") or tracker.get_slot("last_active_loop")!= self.form_name():
+            events.extend([SlotSet("last_active_loop", self.form_name())])
             events.extend(await self.extra_run_logic(dispatcher, tracker, domain))
         events.extend(await super().run(dispatcher, tracker, domain))
         return events
@@ -54,7 +62,6 @@ class CustomFormValidationAction(FormValidationAction, ABC):
 
 
 class ValidateIntroForm(CustomFormValidationAction):
-
     def name(self) -> Text:
         return "validate_intro_form"
 
@@ -64,8 +71,29 @@ class ValidateIntroForm(CustomFormValidationAction):
         tracker: Tracker,
         domain: DomainDict,
     ):
-        events = await super().extra_run_logic()
-        dispatcher.utter_message(text="I am the extra run logic and I should run at the beginning of a form!")
-        events.append(SlotSet("example_slot_to_set_on_form_entry", "value"))
+        events = await super().extra_run_logic(dispatcher, tracker, domain)
+        dispatcher.utter_message(text="I am the first form")
         return events
 
+
+class ValidateSecondIntroForm(CustomFormValidationAction):
+    def name(self) -> Text:
+        return "validate_second_intro_form"
+
+    def validate_name(self, slot_value: Any, dispatcher: CollectingDispatcher, tracker: Tracker, domain: DomainDict):
+        last_user_event_index = [-i for i, event in enumerate(reversed(tracker.events)) if event.get("event")=="user"][0]
+        events_since_last_message = tracker.events[last_user_event_index:]
+        if any([event.get("event")=="active_loop" and event.get("name")==None for event in events_since_last_message]):
+            return {"name": None}
+        return {"name": slot_value}
+
+    async def extra_run_logic(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: DomainDict,
+    ):
+        events = await super().extra_run_logic(dispatcher, tracker, domain)
+        dispatcher.utter_message(text="I am the second form")
+        events.append(SlotSet("name", None))
+        return events

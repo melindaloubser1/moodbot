@@ -1,8 +1,11 @@
 version: "3.0"
 
 intents:
-  - greet
+  - inform
   - intro
+
+entities:
+  - name
 
 responses:
   utter_submit_intro_form:
@@ -11,33 +14,35 @@ responses:
   utter_ask_name:
   - text: "what is your name?"
 
-  utter_greet:
-  - text: "Hey! How are you?"
-
 slots:
   name:
     type: text
     influence_conversation: false
     mappings:
-    - type: from_text
-      not_intent: intro
-      conditions:
-        - active_loop: intro_form
-          requested_slot: name
+    - type: from_entity
+      entity: name
   form_initialized:
     type: any
     mappings:
     - type: custom
-      
+  last_active_loop:
+    type: any
+    mappings:
+    - type: custom
 
 forms:
   intro_form:
     required_slots:
       - form_initialized
       - name
+  second_intro_form:
+    required_slots:
+      - form_initialized
+      - name
 
 actions:
 - validate_intro_form
+- validate_second_intro_form
 - action_validate_slot_mappings
 
 session_config:

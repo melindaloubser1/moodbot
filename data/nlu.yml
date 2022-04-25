@@ -1,21 +1,12 @@
 version: "3.0"
 
 nlu:
-- intent: greet
+- intent: inform
   examples: |
-    - hey
-    - hello
-    - hi
-    - hello there
-    - good morning
-    - good evening
-    - moin
-    - hey there
-    - let's go
-    - hey dude
-    - goodmorning
-    - goodevening
-    - good afternoon
+    - i'm [bob](name)
+    - i'm [sam](name)
+    - i'm [jill](name)
+
 - intent: intro
   examples: |
     - intro
