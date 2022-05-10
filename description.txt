@@ -1,0 +1,1 @@
+An example of how to run logic only on the initial entry into a form, in a Rasa 2.x bot. See the equivalent 3.x branch for the method possible in that version. 
