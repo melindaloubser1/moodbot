@@ -23,6 +23,9 @@ class ValidatePredefinedSlots(ValidationAction):
             return {"form_initialized": True}
 
 class CustomFormValidationAction(FormValidationAction, ABC):
+    def name(self) -> Text:
+        return "custom_form_validation_action"
+
     async def run(
         self,
         dispatcher: CollectingDispatcher,
