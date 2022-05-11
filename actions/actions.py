@@ -24,7 +24,7 @@ class ValidatePredefinedSlots(ValidationAction):
 
 class CustomFormValidationAction(FormValidationAction, ABC):
     def name(self) -> Text:
-        return "custom_form_validation_action"
+        return "validate_intro_form"
 
     async def run(
         self,

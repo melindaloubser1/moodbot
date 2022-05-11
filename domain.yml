@@ -28,7 +28,6 @@ slots:
     type: any
     mappings:
     - type: custom
-      
 
 forms:
   intro_form:
