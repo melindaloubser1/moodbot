@@ -37,6 +37,4 @@ slots:
 
 forms:
   some_form:
-    required_slots:
-    - something
-    - something_else
+    required_slots: []

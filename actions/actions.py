@@ -21,4 +21,4 @@ class ValidateSomeForm(FormValidationAction):
     ) -> Optional[List[Text]]:
 
         logger.debug("Inside required_slots")
-        return []
+        return ["something", "something_else"]
