@@ -1,3 +1,3 @@
 ## What is this branch about?
 
-`3.0` contains the unmodified result of `rasa init` using Rasa 3.0.x.
+`bug_required_slots_not_called` is a mininal reproducible example to investigate [this bug](https://github.com/RasaHQ/rasa/issues/11199).

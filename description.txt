@@ -1,0 +1,1 @@
+This is a mininal reproducible example to investigate [this bug](https://github.com/RasaHQ/rasa/issues/11199).
