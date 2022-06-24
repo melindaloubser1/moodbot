@@ -1,4 +1,4 @@
-version: "3.0"
+version: "3.1"
 
 nlu:
 - intent: greet
@@ -17,7 +17,7 @@ nlu:
     - goodevening
     - good afternoon
 
-- intent: start_something
+- intent: start
   examples: |
     - something
     - start_something

@@ -7,16 +7,21 @@ rules:
   - intent: greet
   - action: utter_greet
 
-- rule: something
+- rule: slots
   steps:
-  - intent: start_something
+  - intent: get_slots
+  - action: utter_slot_value
+
+- rule: form
+  steps:
+  - intent: start
   - action: some_form
   - active_loop: some_form
 
-- rule: something finished
-  conditions:
+- rule: end form
+  condition:
   - active_loop: some_form
   steps:
   - action: some_form
   - active_loop: null
-  - action: utter_say_something
+  - action: utter_form_done

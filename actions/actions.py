@@ -3,6 +3,8 @@ from typing import Text, List, Optional
 from rasa_sdk import FormValidationAction, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 
+import logging
+logger = logging.getLogger(__name__)
 
 class ValidateSomeForm(FormValidationAction):
 
@@ -18,4 +20,5 @@ class ValidateSomeForm(FormValidationAction):
             domain,
     ) -> Optional[List[Text]]:
 
+        logger.debug("Inside required_slots")
         return []

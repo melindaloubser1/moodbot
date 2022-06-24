@@ -2,15 +2,19 @@ version: "3.1"
 
 intents:
   - greet
-  - start_something
+  - start
+  - get_slots
 
 
 responses:
   utter_ask_something:
   - text: what is the thing
-  utter_say_something:
+  utter_ask_something_else:
+  - text: what is the other thing
+  utter_form_done:
   - text: form done
-
+  utter_slot_value:
+  - text: slot value is {something}
   utter_greet:
   - text: hi
 
@@ -26,9 +30,13 @@ slots:
     type: any
     mappings:
     - type: from_text
-
+  something_else:
+    type: any
+    mappings:
+    - type: from_text
 
 forms:
   some_form:
     required_slots:
     - something
+    - something_else
