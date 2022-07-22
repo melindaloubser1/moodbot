@@ -14,7 +14,7 @@ nlu:
 
 
 
-- intent: goodbye
+- intent: goodbye # inline comment
   examples: |
     - cu
     - good by
