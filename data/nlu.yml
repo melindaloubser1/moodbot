@@ -8,12 +8,6 @@ nlu:
       hi
   - text: |
       hey there!
-    metadata:
-      annotator: et
-
-
-
-
 - intent: goodbye # inline comment
   examples: |
     - cu
