@@ -1,21 +1,21 @@
 version: "3.0"
 
 nlu:
+# Do Not Remove
 - intent: greet
-  examples: |
-    - hey
-    - hello
-    - hi
-    - hello there
-    - good morning
-    - good evening
-    - moin
-    - hey there
-    - let's go
-    - hey dude
-    - goodmorning
-    - goodevening
-    - good afternoon
+  metadata:
+    sentiment: neutral
+  examples:
+  - text: |
+      hi
+  - text: |
+      hey there!
+    metadata:
+      annotator: et
+
+
+
+
 
 - intent: goodbye
   examples: |
