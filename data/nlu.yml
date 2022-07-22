@@ -89,3 +89,6 @@ nlu:
     - are you a human?
     - am I talking to a bot?
     - am I talking to a human?
+- intent: install_rasa
+  examples: |
+    - how can i install rasa in vscode
