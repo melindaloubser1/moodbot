@@ -10,13 +10,8 @@ nlu:
       hi
   - text: |
       hey there!
-    metadata:
-      annotator: et
-
-
-
-
-
+  - text: |
+      Hello Sara
 - intent: goodbye
   examples: |
     - cu
